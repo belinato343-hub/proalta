@@ -1,4 +1,7 @@
 import { User, FileText, Bell, HelpCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/sonner";
 
 const menuItems = [
   { icon: FileText, label: "Meus Documentos", description: "Orientações salvas" },
