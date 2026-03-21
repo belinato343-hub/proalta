@@ -52,7 +52,10 @@ const Profile = () => {
       </div>
 
       {/* Logout */}
-      <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 active:scale-[0.98]">
+      <button
+        onClick={handleSignOut}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 active:scale-[0.98]"
+      >
         <LogOut className="h-4 w-4" />
         Sair
       </button>
