@@ -1,4 +1,7 @@
 import { User, FileText, Bell, HelpCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/sonner";
 
 const menuItems = [
   { icon: FileText, label: "Meus Documentos", description: "Orientações salvas" },
@@ -7,6 +10,15 @@ const menuItems = [
 ];
 
 const Profile = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Você saiu da conta");
+    navigate("/login");
+  };
+
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       {/* Profile Card */}
@@ -16,7 +28,7 @@ const Profile = () => {
         </div>
         <div>
           <h2 className="text-base font-semibold text-foreground">Paciente</h2>
-          <p className="text-sm text-muted-foreground">Acesso via QR Code</p>
+          <p className="text-sm text-muted-foreground">{user?.email ?? "Acesso via QR Code"}</p>
         </div>
       </div>
 
@@ -40,7 +52,10 @@ const Profile = () => {
       </div>
 
       {/* Logout */}
-      <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 active:scale-[0.98]">
+      <button
+        onClick={handleSignOut}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 active:scale-[0.98]"
+      >
         <LogOut className="h-4 w-4" />
         Sair
       </button>
