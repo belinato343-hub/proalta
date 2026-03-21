@@ -10,6 +10,15 @@ const menuItems = [
 ];
 
 const Profile = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Você saiu da conta");
+    navigate("/login");
+  };
+
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       {/* Profile Card */}
@@ -19,7 +28,7 @@ const Profile = () => {
         </div>
         <div>
           <h2 className="text-base font-semibold text-foreground">Paciente</h2>
-          <p className="text-sm text-muted-foreground">Acesso via QR Code</p>
+          <p className="text-sm text-muted-foreground">{user?.email ?? "Acesso via QR Code"}</p>
         </div>
       </div>
 
