@@ -1,9 +1,10 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, PlayCircle, MessageCircle, User } from "lucide-react";
+import { Home, PlayCircle, MessageCircle, User, MessagesSquare } from "lucide-react";
 
 const tabs = [
   { path: "/", icon: Home, label: "Início" },
   { path: "/biblioteca", icon: PlayCircle, label: "Biblioteca" },
+  { path: "/chat", icon: MessagesSquare, label: "Chat" },
   { path: "/duvidas", icon: MessageCircle, label: "Dúvidas" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];

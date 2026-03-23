@@ -12,6 +12,7 @@ import VideoLibrary from "./pages/VideoLibrary";
 import Guides from "./pages/Guides";
 import GuideDetail from "./pages/GuideDetail";
 import Checklist from "./pages/Checklist";
+import PatientChat from "./pages/PatientChat";
 import Questions from "./pages/Questions";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
