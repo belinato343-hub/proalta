@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/components/ui/sonner";
 
 const faqItems = [
   { q: "A sonda saiu, o que fazer?", a: "Não tente recolocar. Feche a extremidade da sonda, mantenha a calma e procure atendimento médico imediatamente." },
@@ -7,15 +10,56 @@ const faqItems = [
   { q: "A dieta pode ser esquentada?", a: "A dieta deve estar em temperatura ambiente. Nunca aqueça no micro-ondas ou fogão." },
 ];
 
-const Questions = () => {
-  const [message, setMessage] = useState("");
-  const [sent, setSent] = useState(false);
+interface Question {
+  id: string;
+  content: string;
+  answer: string | null;
+  created_at: string;
+}
 
-  const handleSend = () => {
-    if (message.trim()) {
-      setSent(true);
+const Questions = () => {
+  const { user } = useAuth();
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [myQuestions, setMyQuestions] = useState<Question[]>([]);
+
+  useEffect(() => {
+    if (user) fetchMyQuestions();
+  }, [user]);
+
+  const fetchMyQuestions = async () => {
+    const { data } = await supabase
+      .from("questions")
+      .select("id, content, answer, created_at")
+      .eq("patient_id", user!.id)
+      .order("created_at", { ascending: false });
+    setMyQuestions(data ?? []);
+  };
+
+  const handleSend = async () => {
+    if (!message.trim() || !user) return;
+    setSending(true);
+
+    // Get patient's hospital_id from profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("hospital_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const { error } = await supabase.from("questions").insert({
+      patient_id: user.id,
+      hospital_id: profile?.hospital_id ?? null,
+      content: message.trim(),
+    });
+
+    setSending(false);
+    if (error) {
+      toast.error("Erro ao enviar dúvida", { description: error.message });
+    } else {
+      toast.success("Dúvida enviada! A equipe responderá em breve.");
       setMessage("");
-      setTimeout(() => setSent(false), 3000);
+      fetchMyQuestions();
     }
   };
 
@@ -39,6 +83,29 @@ const Questions = () => {
         ))}
       </div>
 
+      {/* My Questions */}
+      {myQuestions.length > 0 && (
+        <div className="mb-8 flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Minhas Dúvidas</h2>
+          {myQuestions.map((q) => (
+            <div key={q.id} className="rounded-xl bg-card border border-border p-4 shadow-sm">
+              <p className="text-sm text-foreground">{q.content}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {new Date(q.created_at).toLocaleDateString("pt-BR")}
+              </p>
+              {q.answer ? (
+                <div className="mt-3 rounded-lg bg-primary/5 p-3">
+                  <p className="text-xs font-medium text-primary mb-1">Resposta:</p>
+                  <p className="text-sm text-foreground">{q.answer}</p>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-accent font-medium">⏳ Aguardando resposta</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Send Question */}
       <div className="rounded-xl bg-card border border-border p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Envie sua dúvida</h2>
@@ -51,17 +118,12 @@ const Questions = () => {
         />
         <button
           onClick={handleSend}
-          disabled={!message.trim()}
+          disabled={!message.trim() || sending}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98]"
         >
           <Send className="h-4 w-4" />
-          Enviar Dúvida
+          {sending ? "Enviando..." : "Enviar Dúvida"}
         </button>
-        {sent && (
-          <p className="mt-3 animate-fade-in text-center text-sm font-medium text-primary">
-            ✅ Dúvida enviada! A equipe responderá em breve.
-          </p>
-        )}
       </div>
     </div>
   );
