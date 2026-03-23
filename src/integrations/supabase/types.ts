@@ -14,9 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          hospital_id: string
+          id: string
+          patient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          hospital_id: string
+          id?: string
+          patient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          patient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitals: {
+        Row: {
+          admin_user_id: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
+          hospital_id: string | null
           hospital_origem: string | null
           id: string
           nome: string | null
@@ -26,6 +86,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          hospital_id?: string | null
           hospital_origem?: string | null
           id?: string
           nome?: string | null
@@ -35,11 +96,79 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          hospital_id?: string | null
           hospital_origem?: string | null
           id?: string
           nome?: string | null
           tipo_sonda?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          answered_by: string | null
+          content: string
+          created_at: string
+          hospital_id: string | null
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          content: string
+          created_at?: string
+          hospital_id?: string | null
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          content?: string
+          created_at?: string
+          hospital_id?: string | null
+          id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -49,10 +178,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "patient" | "hospital_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -179,6 +314,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["patient", "hospital_admin"],
+    },
   },
 } as const
