@@ -12,6 +12,7 @@ interface Question {
   patient_id: string;
   content: string;
   answer: string | null;
+  is_ai_answer: boolean | null;
   answered_at: string | null;
   created_at: string;
   patient_name?: string;
