@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Send } from "lucide-react";
+import { Send, Bot, User as UserIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
@@ -14,6 +14,7 @@ interface Question {
   id: string;
   content: string;
   answer: string | null;
+  is_ai_answer: boolean | null;
   created_at: string;
 }
 
@@ -30,7 +31,7 @@ const Questions = () => {
   const fetchMyQuestions = async () => {
     const { data } = await supabase
       .from("questions")
-      .select("id, content, answer, created_at")
+      .select("id, content, answer, is_ai_answer, created_at")
       .eq("patient_id", user!.id)
       .order("created_at", { ascending: false });
     setMyQuestions(data ?? []);
@@ -40,27 +41,47 @@ const Questions = () => {
     if (!message.trim() || !user) return;
     setSending(true);
 
-    // Get patient's hospital_id from profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("hospital_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const { error } = await supabase.from("questions").insert({
+    const { data: inserted, error } = await supabase.from("questions").insert({
       patient_id: user.id,
       hospital_id: profile?.hospital_id ?? null,
       content: message.trim(),
-    });
+    }).select("id").single();
+
+    if (error) {
+      setSending(false);
+      toast.error("Erro ao enviar dúvida", { description: error.message });
+      return;
+    }
+
+    const questionText = message.trim();
+    setMessage("");
+    toast.success("Dúvida enviada! Gerando resposta automática...");
+    fetchMyQuestions();
+
+    // Call AI auto-answer
+    try {
+      const { data: aiData, error: aiError } = await supabase.functions.invoke("auto-answer", {
+        body: { question: questionText, questionId: inserted?.id },
+      });
+
+      if (aiError) {
+        console.error("AI error:", aiError);
+        toast.info("Não foi possível gerar resposta automática. A equipe responderá em breve.");
+      } else if (aiData?.answer) {
+        toast.success("Resposta automática gerada!");
+      }
+    } catch (e) {
+      console.error("AI call failed:", e);
+    }
 
     setSending(false);
-    if (error) {
-      toast.error("Erro ao enviar dúvida", { description: error.message });
-    } else {
-      toast.success("Dúvida enviada! A equipe responderá em breve.");
-      setMessage("");
-      fetchMyQuestions();
-    }
+    fetchMyQuestions();
   };
 
   return (
@@ -95,11 +116,31 @@ const Questions = () => {
               </p>
               {q.answer ? (
                 <div className="mt-3 rounded-lg bg-primary/5 p-3">
-                  <p className="text-xs font-medium text-primary mb-1">Resposta:</p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {q.is_ai_answer ? (
+                      <>
+                        <Bot className="h-3.5 w-3.5 text-primary" />
+                        <p className="text-xs font-medium text-primary">Resposta da IA</p>
+                      </>
+                    ) : (
+                      <>
+                        <UserIcon className="h-3.5 w-3.5 text-primary" />
+                        <p className="text-xs font-medium text-primary">Resposta da equipe</p>
+                      </>
+                    )}
+                  </div>
                   <p className="text-sm text-foreground">{q.answer}</p>
+                  {q.is_ai_answer && (
+                    <p className="mt-2 text-xs text-muted-foreground italic">
+                      ⚠️ Resposta gerada por IA. A equipe médica pode revisar e complementar.
+                    </p>
+                  )}
                 </div>
               ) : (
-                <p className="mt-2 text-xs text-accent font-medium">⏳ Aguardando resposta</p>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                  <p className="text-xs text-accent font-medium">Gerando resposta...</p>
+                </div>
               )}
             </div>
           ))}
@@ -121,8 +162,17 @@ const Questions = () => {
           disabled={!message.trim() || sending}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98]"
         >
-          <Send className="h-4 w-4" />
-          {sending ? "Enviando..." : "Enviar Dúvida"}
+          {sending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processando...
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4" />
+              Enviar Dúvida
+            </>
+          )}
         </button>
       </div>
     </div>

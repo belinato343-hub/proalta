@@ -123,6 +123,7 @@ export type Database = {
           created_at: string
           hospital_id: string | null
           id: string
+          is_ai_answer: boolean | null
           patient_id: string
         }
         Insert: {
@@ -133,6 +134,7 @@ export type Database = {
           created_at?: string
           hospital_id?: string | null
           id?: string
+          is_ai_answer?: boolean | null
           patient_id: string
         }
         Update: {
@@ -143,6 +145,7 @@ export type Database = {
           created_at?: string
           hospital_id?: string | null
           id?: string
+          is_ai_answer?: boolean | null
           patient_id?: string
         }
         Relationships: [

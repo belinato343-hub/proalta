@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { HelpCircle, Send, Check } from "lucide-react";
+import { HelpCircle, Send, Check, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ interface Question {
   patient_id: string;
   content: string;
   answer: string | null;
+  is_ai_answer: boolean | null;
   answered_at: string | null;
   created_at: string;
   patient_name?: string;
@@ -144,6 +145,11 @@ const AdminQuestions = () => {
                         · {new Date(q.created_at).toLocaleDateString("pt-BR")}
                       </span>
                       <Check className="h-4 w-4 text-primary" />
+                      {q.is_ai_answer && (
+                        <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          <Bot className="h-3 w-3" /> IA
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-foreground">{q.content}</p>
                     <div className="mt-3 rounded-lg bg-primary/5 p-3">
