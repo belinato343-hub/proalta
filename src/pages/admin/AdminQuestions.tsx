@@ -145,6 +145,11 @@ const AdminQuestions = () => {
                         · {new Date(q.created_at).toLocaleDateString("pt-BR")}
                       </span>
                       <Check className="h-4 w-4 text-primary" />
+                      {q.is_ai_answer && (
+                        <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          <Bot className="h-3 w-3" /> IA
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-foreground">{q.content}</p>
                     <div className="mt-3 rounded-lg bg-primary/5 p-3">
