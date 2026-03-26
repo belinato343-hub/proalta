@@ -1,3 +1,9 @@
+/**
+ * ResetPassword — Tela de redefinição de senha.
+ * Acessada via link de recuperação enviado por e-mail.
+ * Verifica se o acesso é um fluxo válido de recovery antes de permitir a troca.
+ */
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,11 +23,13 @@ const ResetPassword = () => {
   const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
+    // Verifica se a URL contém parâmetros de recovery (type=recovery no hash)
     const hash = window.location.hash;
     if (hash.includes("type=recovery")) {
       setIsRecovery(true);
     }
 
+    // Escuta o evento PASSWORD_RECOVERY do Supabase Auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
@@ -31,6 +39,7 @@ const ResetPassword = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  /** Atualiza a senha do usuário usando a sessão de recovery */
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -52,6 +61,7 @@ const ResetPassword = () => {
     }
   };
 
+  // Se não é um fluxo de recovery válido, mostra mensagem de erro
   if (!isRecovery) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,6 +91,7 @@ const ResetPassword = () => {
         </CardHeader>
 
         <CardContent>
+          {/* Formulário de redefinição de senha */}
           <form onSubmit={handleReset} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password" className="text-foreground">Nova senha</Label>

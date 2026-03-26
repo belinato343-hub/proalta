@@ -1,3 +1,9 @@
+/**
+ * AdminQuestions — Painel de dúvidas dos pacientes para o admin hospitalar.
+ * Exibe dúvidas pendentes (sem resposta) e já respondidas.
+ * Permite responder dúvidas com campo de texto, sobrescrevendo respostas da IA se necessário.
+ */
+
 import { useEffect, useState } from "react";
 import { HelpCircle, Send, Check, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 
+/** Tipagem de uma dúvida com dados do paciente */
 interface Question {
   id: string;
   patient_id: string;
@@ -23,14 +30,16 @@ const AdminQuestions = () => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({}); // Rascunhos de resposta por ID
+  const [saving, setSaving] = useState<string | null>(null); // ID da pergunta sendo salva
 
+  // Busca as dúvidas ao montar, filtradas pelo hospital
   useEffect(() => {
     if (!hospitalId) return;
     fetchQuestions();
   }, [hospitalId]);
 
+  /** Busca todas as dúvidas do hospital e enriquece com nomes dos pacientes */
   const fetchQuestions = async () => {
     const { data } = await supabase
       .from("questions")
@@ -39,7 +48,7 @@ const AdminQuestions = () => {
       .order("created_at", { ascending: false });
 
     if (data) {
-      // Fetch patient names
+      // Busca os nomes dos pacientes para exibir junto à dúvida
       const patientIds = [...new Set(data.map((q) => q.patient_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -52,6 +61,7 @@ const AdminQuestions = () => {
     setLoading(false);
   };
 
+  /** Envia a resposta do admin para uma dúvida específica */
   const handleAnswer = async (questionId: string) => {
     const answerText = answers[questionId]?.trim();
     if (!answerText) return;
@@ -72,10 +82,11 @@ const AdminQuestions = () => {
     } else {
       toast.success("Resposta enviada!");
       setAnswers((prev) => ({ ...prev, [questionId]: "" }));
-      fetchQuestions();
+      fetchQuestions(); // Recarrega a lista
     }
   };
 
+  // Separa as dúvidas em pendentes e respondidas
   const pending = questions.filter((q) => !q.answer);
   const answered = questions.filter((q) => q.answer);
 
@@ -89,12 +100,14 @@ const AdminQuestions = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : questions.length === 0 ? (
+        /* Estado vazio */
         <div className="rounded-xl border border-border bg-card p-12 text-center">
           <HelpCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
           <p className="font-medium text-foreground">Nenhuma dúvida recebida</p>
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Seção de dúvidas pendentes */}
           {pending.length > 0 && (
             <div>
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-accent">
@@ -103,6 +116,7 @@ const AdminQuestions = () => {
               <div className="space-y-4">
                 {pending.map((q) => (
                   <div key={q.id} className="rounded-xl border border-accent/30 bg-card p-5 shadow-sm">
+                    {/* Nome do paciente e data */}
                     <div className="mb-2 flex items-center gap-2">
                       <span className="text-xs font-medium text-primary">{q.patient_name || "Paciente"}</span>
                       <span className="text-xs text-muted-foreground">
@@ -110,6 +124,7 @@ const AdminQuestions = () => {
                       </span>
                     </div>
                     <p className="mb-4 text-sm text-foreground">{q.content}</p>
+                    {/* Campo para escrever a resposta */}
                     <Textarea
                       placeholder="Escreva sua resposta..."
                       value={answers[q.id] ?? ""}
@@ -131,6 +146,7 @@ const AdminQuestions = () => {
             </div>
           )}
 
+          {/* Seção de dúvidas já respondidas */}
           {answered.length > 0 && (
             <div>
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -145,6 +161,7 @@ const AdminQuestions = () => {
                         · {new Date(q.created_at).toLocaleDateString("pt-BR")}
                       </span>
                       <Check className="h-4 w-4 text-primary" />
+                      {/* Badge indicando se a resposta foi gerada por IA */}
                       {q.is_ai_answer && (
                         <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                           <Bot className="h-3 w-3" /> IA

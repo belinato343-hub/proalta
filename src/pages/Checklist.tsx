@@ -1,7 +1,15 @@
+/**
+ * Checklist — Checklist diário de cuidados com a sonda.
+ * Permite ao paciente marcar/desmarcar cada item de cuidado realizado.
+ * Exibe barra de progresso e mensagem de parabéns ao completar 100%.
+ * Nota: O estado é local (não persiste no banco de dados).
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 
+/** Itens do checklist de cuidados diários */
 const checklistItems = [
   { id: 1, text: "Lavei as mãos antes de manipular a sonda" },
   { id: 2, text: "Verifiquei a posição/marcação da sonda" },
@@ -18,6 +26,7 @@ const Checklist = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
+  /** Alterna o estado de um item (marcado/desmarcado) */
   const toggle = (id: number) => {
     setChecked((prev) => {
       const next = new Set(prev);
@@ -27,10 +36,12 @@ const Checklist = () => {
     });
   };
 
+  /** Calcula a porcentagem de progresso */
   const progress = Math.round((checked.size / checklistItems.length) * 100);
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
+      {/* Botão de voltar para a home */}
       <button
         onClick={() => navigate("/")}
         className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -42,7 +53,7 @@ const Checklist = () => {
       <h1 className="mb-1 text-xl font-bold text-foreground animate-fade-in">Checklist Diário</h1>
       <p className="mb-4 text-sm text-muted-foreground animate-fade-in">Marque cada cuidado realizado hoje</p>
 
-      {/* Progress Bar */}
+      {/* Barra de progresso */}
       <div className="mb-6 animate-fade-in">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-foreground">{checked.size} de {checklistItems.length}</span>
@@ -56,7 +67,7 @@ const Checklist = () => {
         </div>
       </div>
 
-      {/* Items */}
+      {/* Lista de itens do checklist */}
       <div className="flex flex-col gap-2">
         {checklistItems.map((item, index) => {
           const isChecked = checked.has(item.id);
@@ -71,6 +82,7 @@ const Checklist = () => {
               }`}
               style={{ animationDelay: `${index * 0.04}s` }}
             >
+              {/* Indicador visual de check */}
               <div
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                   isChecked
@@ -92,6 +104,7 @@ const Checklist = () => {
         })}
       </div>
 
+      {/* Mensagem de conclusão quando todos os itens são marcados */}
       {progress === 100 && (
         <div className="mt-6 animate-fade-in rounded-xl bg-primary/10 p-4 text-center">
           <p className="text-sm font-semibold text-primary">✅ Parabéns! Todos os cuidados foram realizados hoje.</p>

@@ -1,3 +1,9 @@
+/**
+ * useUserRole — Hook para verificar a role (papel) do usuário logado.
+ * Consulta a tabela user_roles para saber se é paciente ou hospital_admin.
+ * Se for admin, também busca o hospital_id vinculado.
+ */
+
 import { useState, useEffect } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +15,7 @@ export const useUserRole = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Se não há usuário logado, reseta os estados
     if (!user) {
       setRole(null);
       setHospitalId(null);
@@ -17,6 +24,7 @@ export const useUserRole = () => {
     }
 
     const fetchRole = async () => {
+      // Busca a role do usuário na tabela user_roles
       const { data } = await supabase
         .from("user_roles")
         .select("role")
@@ -26,6 +34,7 @@ export const useUserRole = () => {
       const userRole = data?.role ?? "patient";
       setRole(userRole);
 
+      // Se for admin hospitalar, busca o ID do hospital vinculado
       if (userRole === "hospital_admin") {
         const { data: hospital } = await supabase
           .from("hospitals")

@@ -1,8 +1,15 @@
+/**
+ * AdminLayout — Layout do painel administrativo para hospitais.
+ * Inclui uma sidebar fixa à esquerda com navegação para
+ * Dashboard, Pacientes, Dúvidas e Chat, além do botão de logout.
+ */
+
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
+/** Itens do menu lateral do painel admin */
 const sidebarItems = [
   { path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/admin/pacientes", icon: Users, label: "Pacientes" },
@@ -15,6 +22,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
+  /** Faz logout e redireciona para a tela de login */
   const handleSignOut = async () => {
     await signOut();
     toast.success("Você saiu da conta");
@@ -23,8 +31,9 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
+      {/* Sidebar — Menu lateral fixo */}
       <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-card">
+        {/* Logo e título do sistema */}
         <div className="flex items-center gap-3 border-b border-border px-6 py-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">P</span>
@@ -35,6 +44,7 @@ const AdminLayout = () => {
           </div>
         </div>
 
+        {/* Links de navegação do menu */}
         <nav className="flex-1 space-y-1 px-3 py-4">
           {sidebarItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -55,6 +65,7 @@ const AdminLayout = () => {
           })}
         </nav>
 
+        {/* Botão de sair na parte inferior da sidebar */}
         <div className="border-t border-border p-3">
           <button
             onClick={handleSignOut}
@@ -66,7 +77,7 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Área de conteúdo principal — renderiza a rota filha */}
       <main className="ml-64 flex-1 p-8">
         <Outlet />
       </main>
