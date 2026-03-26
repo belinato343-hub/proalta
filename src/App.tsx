@@ -1,3 +1,9 @@
+/**
+ * App.tsx — Arquivo raiz da aplicação.
+ * Define todas as rotas, provedores globais (React Query, Tooltip, Auth)
+ * e os guardas de rota (ProtectedRoute, AdminRoute, PublicRoute).
+ */
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,8 +31,14 @@ import PatientList from "./pages/admin/PatientList";
 import AdminQuestions from "./pages/admin/AdminQuestions";
 import AdminChat from "./pages/admin/AdminChat";
 
+/** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
 
+/**
+ * Guarda de rota para pacientes autenticados.
+ * - Redireciona para /login se não houver sessão ativa.
+ * - Redireciona admins para /admin automaticamente.
+ */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
@@ -43,6 +55,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+/**
+ * Guarda de rota para administradores hospitalares.
+ * - Redireciona para /login se não houver sessão.
+ * - Redireciona para / se o usuário não for admin.
+ */
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
@@ -59,6 +76,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+/**
+ * Guarda de rota para páginas públicas (login, cadastro).
+ * - Redireciona para / se o usuário já estiver logado.
+ */
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   if (loading) {
@@ -75,18 +96,19 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      {/* Componentes globais de notificação (toasts) */}
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public auth routes */}
+            {/* ===== Rotas públicas de autenticação ===== */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/cadastro" element={<PublicRoute><Signup /></PublicRoute>} />
             <Route path="/esqueci-senha" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
 
-            {/* Admin routes */}
+            {/* ===== Rotas do painel administrativo (hospital) ===== */}
             <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/pacientes" element={<PatientList />} />
@@ -94,7 +116,7 @@ const App = () => (
               <Route path="/admin/chat" element={<AdminChat />} />
             </Route>
 
-            {/* Protected patient routes */}
+            {/* ===== Rotas protegidas do paciente ===== */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Home />} />
               <Route path="/biblioteca" element={<VideoLibrary />} />
@@ -105,6 +127,8 @@ const App = () => (
               <Route path="/duvidas" element={<Questions />} />
               <Route path="/perfil" element={<Profile />} />
             </Route>
+
+            {/* Rota de fallback — página não encontrada */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

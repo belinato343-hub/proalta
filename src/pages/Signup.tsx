@@ -1,3 +1,9 @@
+/**
+ * Signup — Tela de cadastro de novos pacientes.
+ * Suporta cadastro por e-mail/senha e Google OAuth.
+ * Após o cadastro, redireciona para o login com mensagem de confirmação de e-mail.
+ */
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +22,11 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  /** Realiza o cadastro com e-mail e senha */
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validações locais antes de enviar ao servidor
     if (password !== confirmPassword) {
       toast.error("As senhas não coincidem");
       return;
@@ -26,6 +35,7 @@ const Signup = () => {
       toast.error("A senha deve ter no mínimo 6 caracteres");
       return;
     }
+
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -33,6 +43,7 @@ const Signup = () => {
       options: { emailRedirectTo: window.location.origin },
     });
     setLoading(false);
+
     if (error) {
       toast.error("Erro ao criar conta", { description: error.message });
     } else {
@@ -43,6 +54,7 @@ const Signup = () => {
     }
   };
 
+  /** Inicia o fluxo de cadastro com Google OAuth */
   const handleGoogleSignup = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -67,6 +79,7 @@ const Signup = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* Botão de cadastro com Google */}
           <Button
             variant="outline"
             className="w-full gap-2 border-border text-foreground"
@@ -82,6 +95,7 @@ const Signup = () => {
             Cadastrar com Google
           </Button>
 
+          {/* Divisor visual */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
@@ -91,6 +105,7 @@ const Signup = () => {
             </div>
           </div>
 
+          {/* Formulário de cadastro */}
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">E-mail</Label>
@@ -153,6 +168,7 @@ const Signup = () => {
           </form>
         </CardContent>
 
+        {/* Link para quem já tem conta */}
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">
             Já tem conta?{" "}

@@ -1,3 +1,9 @@
+/**
+ * Login — Tela de login do aplicativo.
+ * Suporta login por e-mail/senha e Google OAuth.
+ * Redireciona para a home após login bem-sucedido.
+ */
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +21,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  /** Realiza login com e-mail e senha */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -23,10 +30,12 @@ const Login = () => {
     if (error) {
       toast.error("Erro ao entrar", { description: error.message });
     } else {
+      // O redirecionamento correto (paciente ou admin) é feito pelos guardas de rota
       navigate("/");
     }
   };
 
+  /** Inicia o fluxo de login com Google OAuth */
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -40,6 +49,7 @@ const Login = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md animate-fade-in border-border shadow-lg">
+        {/* Cabeçalho do card com logo e título */}
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
             <span className="text-2xl font-bold text-primary">P</span>
@@ -51,6 +61,7 @@ const Login = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* Botão de login com Google */}
           <Button
             variant="outline"
             className="w-full gap-2 border-border text-foreground"
@@ -66,6 +77,7 @@ const Login = () => {
             Entrar com Google
           </Button>
 
+          {/* Divisor visual "ou" */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
@@ -75,6 +87,7 @@ const Login = () => {
             </div>
           </div>
 
+          {/* Formulário de login com e-mail e senha */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">E-mail</Label>
@@ -105,6 +118,7 @@ const Login = () => {
                   className="pl-10 pr-10"
                   required
                 />
+                {/* Botão para mostrar/ocultar senha */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -115,6 +129,7 @@ const Login = () => {
               </div>
             </div>
 
+            {/* Link para recuperação de senha */}
             <div className="text-right">
               <Link to="/esqueci-senha" className="text-sm text-primary hover:underline">
                 Esqueci minha senha
@@ -127,6 +142,7 @@ const Login = () => {
           </form>
         </CardContent>
 
+        {/* Link para criar conta */}
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">
             Não tem conta?{" "}

@@ -1,3 +1,9 @@
+/**
+ * ForgotPassword — Tela de recuperação de senha.
+ * Envia um e-mail com link para redefinir a senha do usuário.
+ * Após o envio, exibe uma tela de confirmação.
+ */
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +19,7 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
+  /** Envia o e-mail de recuperação de senha via Supabase Auth */
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -27,6 +34,7 @@ const ForgotPassword = () => {
     }
   };
 
+  // Tela de confirmação exibida após o envio do e-mail
   if (sent) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -67,6 +75,7 @@ const ForgotPassword = () => {
         </CardHeader>
 
         <CardContent>
+          {/* Formulário para solicitar redefinição de senha */}
           <form onSubmit={handleReset} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">E-mail</Label>

@@ -1,7 +1,14 @@
+/**
+ * GuideDetail — Tela de orientações passo a passo para cada tipo de sonda.
+ * Exibe os passos em formato de carrossel (um por vez) com barra de progresso.
+ * O conteúdo é estático e baseado em boas práticas médicas.
+ */
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 
+/** Dados dos passos de orientação para cada tipo de sonda */
 const guideSteps: Record<string, { title: string; steps: { title: string; instruction: string }[] }> = {
   nasogastrica: {
     title: "Sonda Nasogástrica",
@@ -51,8 +58,10 @@ const GuideDetail = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
 
+  // Busca os dados do guia com base no ID da URL
   const guide = guideSteps[id || ""];
 
+  // Exibe mensagem caso a orientação não exista
   if (!guide) {
     return (
       <div className="mx-auto max-w-lg px-4 pt-6">
@@ -67,7 +76,7 @@ const GuideDetail = () => {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
-      {/* Back button */}
+      {/* Botão de voltar para a lista de orientações */}
       <button
         onClick={() => navigate("/orientacoes")}
         className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -78,7 +87,7 @@ const GuideDetail = () => {
 
       <h1 className="mb-2 text-xl font-bold text-foreground">{guide.title}</h1>
 
-      {/* Progress */}
+      {/* Barra de progresso segmentada (uma bolinha por passo) */}
       <div className="mb-6 flex gap-1.5">
         {guide.steps.map((_, i) => (
           <div
@@ -90,9 +99,10 @@ const GuideDetail = () => {
         ))}
       </div>
 
-      {/* Step Card */}
+      {/* Card do passo atual */}
       <div className="animate-fade-in rounded-xl bg-card border border-border p-6 shadow-sm" key={currentStep}>
         <div className="mb-4 flex items-center gap-2">
+          {/* Número do passo */}
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
             {currentStep + 1}
           </div>
@@ -101,7 +111,7 @@ const GuideDetail = () => {
         <p className="text-base leading-relaxed text-muted-foreground">{step.instruction}</p>
       </div>
 
-      {/* Navigation */}
+      {/* Botões de navegação (Anterior / Próximo / Concluir) */}
       <div className="mt-6 flex gap-3">
         {!isFirst && (
           <button
@@ -115,7 +125,7 @@ const GuideDetail = () => {
         <button
           onClick={() => {
             if (isLast) {
-              navigate("/orientacoes");
+              navigate("/orientacoes"); // Volta para a lista ao concluir
             } else {
               setCurrentStep((s) => s + 1);
             }

@@ -1,15 +1,24 @@
+/**
+ * Questions — Tela de dúvidas do paciente.
+ * Exibe FAQs, lista de dúvidas já enviadas (com respostas da IA ou equipe)
+ * e formulário para envio de novas perguntas.
+ * Ao enviar, chama a edge function auto-answer para gerar resposta automática via IA.
+ */
+
 import { useState, useEffect } from "react";
 import { Send, Bot, User as UserIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
+/** Perguntas frequentes fixas exibidas no topo da página */
 const faqItems = [
   { q: "A sonda saiu, o que fazer?", a: "Não tente recolocar. Feche a extremidade da sonda, mantenha a calma e procure atendimento médico imediatamente." },
   { q: "Posso dar medicamentos pela sonda?", a: "Apenas medicamentos prescritos e orientados pela equipe. Sempre lave a sonda com água antes e depois." },
   { q: "A dieta pode ser esquentada?", a: "A dieta deve estar em temperatura ambiente. Nunca aqueça no micro-ondas ou fogão." },
 ];
 
+/** Tipagem de uma pergunta enviada pelo paciente */
 interface Question {
   id: string;
   content: string;
@@ -24,10 +33,12 @@ const Questions = () => {
   const [sending, setSending] = useState(false);
   const [myQuestions, setMyQuestions] = useState<Question[]>([]);
 
+  // Carrega as dúvidas do paciente ao montar
   useEffect(() => {
     if (user) fetchMyQuestions();
   }, [user]);
 
+  /** Busca todas as dúvidas enviadas pelo paciente logado */
   const fetchMyQuestions = async () => {
     const { data } = await supabase
       .from("questions")
@@ -37,16 +48,19 @@ const Questions = () => {
     setMyQuestions(data ?? []);
   };
 
+  /** Envia uma nova dúvida e solicita resposta automática da IA */
   const handleSend = async () => {
     if (!message.trim() || !user) return;
     setSending(true);
 
+    // Busca o hospital_id do paciente para vincular a dúvida
     const { data: profile } = await supabase
       .from("profiles")
       .select("hospital_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // Insere a dúvida na tabela questions
     const { data: inserted, error } = await supabase.from("questions").insert({
       patient_id: user.id,
       hospital_id: profile?.hospital_id ?? null,
@@ -64,24 +78,24 @@ const Questions = () => {
     toast.success("Dúvida enviada! Gerando resposta automática...");
     fetchMyQuestions();
 
-    // Call AI auto-answer
+    // Chama a edge function de resposta automática por IA
     try {
       const { data: aiData, error: aiError } = await supabase.functions.invoke("auto-answer", {
         body: { question: questionText, questionId: inserted?.id },
       });
 
       if (aiError) {
-        console.error("AI error:", aiError);
+        console.error("Erro da IA:", aiError);
         toast.info("Não foi possível gerar resposta automática. A equipe responderá em breve.");
       } else if (aiData?.answer) {
         toast.success("Resposta automática gerada!");
       }
     } catch (e) {
-      console.error("AI call failed:", e);
+      console.error("Falha na chamada da IA:", e);
     }
 
     setSending(false);
-    fetchMyQuestions();
+    fetchMyQuestions(); // Recarrega para exibir a resposta da IA
   };
 
   return (
@@ -89,7 +103,7 @@ const Questions = () => {
       <h1 className="mb-1 text-xl font-bold text-foreground animate-fade-in">Dúvidas</h1>
       <p className="mb-6 text-sm text-muted-foreground animate-fade-in">Perguntas frequentes e envio de dúvidas</p>
 
-      {/* FAQ */}
+      {/* Seção de Perguntas Frequentes (FAQ) */}
       <div className="mb-8 flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Perguntas Frequentes</h2>
         {faqItems.map((item, index) => (
@@ -104,7 +118,7 @@ const Questions = () => {
         ))}
       </div>
 
-      {/* My Questions */}
+      {/* Lista de dúvidas já enviadas pelo paciente */}
       {myQuestions.length > 0 && (
         <div className="mb-8 flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Minhas Dúvidas</h2>
@@ -115,6 +129,7 @@ const Questions = () => {
                 {new Date(q.created_at).toLocaleDateString("pt-BR")}
               </p>
               {q.answer ? (
+                /* Exibe a resposta com badge indicando se é da IA ou da equipe */
                 <div className="mt-3 rounded-lg bg-primary/5 p-3">
                   <div className="flex items-center gap-1.5 mb-1">
                     {q.is_ai_answer ? (
@@ -137,6 +152,7 @@ const Questions = () => {
                   )}
                 </div>
               ) : (
+                /* Indicador de carregamento enquanto a IA processa a resposta */
                 <div className="mt-2 flex items-center gap-1.5">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
                   <p className="text-xs text-accent font-medium">Gerando resposta...</p>
@@ -147,7 +163,7 @@ const Questions = () => {
         </div>
       )}
 
-      {/* Send Question */}
+      {/* Formulário para envio de nova dúvida */}
       <div className="rounded-xl bg-card border border-border p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Envie sua dúvida</h2>
         <textarea

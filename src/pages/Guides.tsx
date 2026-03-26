@@ -1,6 +1,13 @@
+/**
+ * Guides — Tela de seleção de orientações por tipo de sonda.
+ * Exibe uma lista de categorias (Nasogástrica, Nasoenteral, Gastrostomia, Jejunostomia).
+ * Ao clicar, navega para a página de detalhes com o passo a passo.
+ */
+
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
+/** Categorias de orientações disponíveis */
 const guideCategories = [
   {
     title: "Sonda Nasogástrica",
@@ -38,6 +45,7 @@ const Guides = () => {
         Selecione o tipo de sonda para ver as orientações
       </p>
 
+      {/* Lista de categorias de sonda */}
       <div className="flex flex-col gap-3">
         {guideCategories.map((cat, index) => (
           <button

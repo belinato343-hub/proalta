@@ -1,34 +1,37 @@
+/**
+ * Home — Tela inicial do paciente.
+ * Exibe uma saudação, alerta de emergência e cards de ação rápida
+ * (Vídeos, Checklist, Orientações, Dúvidas).
+ */
+
 import { useNavigate } from "react-router-dom";
 import { PlayCircle, ClipboardCheck, BookOpen, MessageCircle, AlertTriangle } from "lucide-react";
 
+/** Cards de ação rápida exibidos na tela inicial */
 const actionCards = [
   {
     title: "Assistir Vídeos",
     description: "Vídeos educativos sobre cuidados com a sonda",
     icon: PlayCircle,
     path: "/biblioteca",
-    color: "bg-primary text-primary-foreground",
   },
   {
     title: "Checklist Diário",
     description: "Verifique os cuidados do dia",
     icon: ClipboardCheck,
     path: "/checklist",
-    color: "bg-primary text-primary-foreground",
   },
   {
     title: "Orientações",
     description: "Passo a passo para cada tipo de sonda",
     icon: BookOpen,
     path: "/orientacoes",
-    color: "bg-primary text-primary-foreground",
   },
   {
     title: "Enviar Dúvida",
     description: "Tire suas dúvidas com a equipe",
     icon: MessageCircle,
     path: "/duvidas",
-    color: "bg-primary text-primary-foreground",
   },
 ];
 
@@ -37,7 +40,7 @@ const Home = () => {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
-      {/* Header */}
+      {/* Cabeçalho com logo e nome do app */}
       <div className="mb-6 animate-fade-in">
         <div className="flex items-center gap-3 mb-1">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
@@ -50,17 +53,15 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Welcome */}
+      {/* Card de boas-vindas */}
       <div className="mb-6 animate-slide-up rounded-xl bg-card p-5 shadow-sm border border-border">
-        <p className="text-base font-medium text-foreground">
-          Olá! 👋
-        </p>
+        <p className="text-base font-medium text-foreground">Olá! 👋</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Aqui você encontra todas as orientações para o cuidado seguro com a sonda e a dieta enteral em casa.
         </p>
       </div>
 
-      {/* Alert Card */}
+      {/* Card de alerta de emergência */}
       <div className="mb-6 animate-slide-up rounded-xl border border-accent/30 bg-accent/10 p-4 flex items-start gap-3" style={{ animationDelay: "0.1s" }}>
         <AlertTriangle className="h-5 w-5 text-accent mt-0.5 shrink-0" />
         <div>
@@ -71,7 +72,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Action Cards */}
+      {/* Grid de cards de ação rápida */}
       <div className="grid grid-cols-2 gap-3">
         {actionCards.map((card, index) => (
           <button
@@ -89,7 +90,7 @@ const Home = () => {
         ))}
       </div>
 
-      {/* Footer note */}
+      {/* Rodapé com créditos */}
       <p className="mt-8 mb-4 text-center text-xs text-muted-foreground">
         Conteúdo validado por nutricionistas especializados
       </p>

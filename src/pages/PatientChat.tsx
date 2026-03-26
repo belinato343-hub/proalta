@@ -1,9 +1,16 @@
+/**
+ * PatientChat — Tela de chat do paciente com o hospital.
+ * Exibe mensagens em tempo real usando Supabase Realtime.
+ * Só funciona se o paciente estiver vinculado a um hospital.
+ */
+
 import { useEffect, useState, useRef } from "react";
 import { Send, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 
+/** Tipagem de uma mensagem do chat */
 interface Message {
   id: string;
   sender_id: string;
@@ -20,9 +27,11 @@ const PatientChat = () => {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Busca o hospital_id do paciente e carrega as mensagens existentes
   useEffect(() => {
     if (!user) return;
     const init = async () => {
+      // Busca o hospital vinculado ao perfil do paciente
       const { data: profile } = await supabase
         .from("profiles")
         .select("hospital_id")
@@ -32,6 +41,7 @@ const PatientChat = () => {
       const hId = profile?.hospital_id ?? null;
       setHospitalId(hId);
 
+      // Se tem hospital vinculado, carrega o histórico de mensagens
       if (hId) {
         const { data } = await supabase
           .from("chat_messages")
@@ -46,6 +56,7 @@ const PatientChat = () => {
     init();
   }, [user]);
 
+  // Inscrição no Supabase Realtime para receber novas mensagens instantaneamente
   useEffect(() => {
     if (!hospitalId || !user) return;
     const channel = supabase
@@ -64,13 +75,16 @@ const PatientChat = () => {
       )
       .subscribe();
 
+    // Remove a inscrição ao desmontar o componente
     return () => { supabase.removeChannel(channel); };
   }, [hospitalId, user]);
 
+  // Auto-scroll para a última mensagem ao receber novas mensagens
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  /** Envia uma nova mensagem para o hospital */
   const handleSend = async () => {
     if (!newMessage.trim() || !hospitalId || !user) return;
     setSending(true);
@@ -84,6 +98,7 @@ const PatientChat = () => {
     setNewMessage("");
   };
 
+  // Tela de carregamento
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -92,6 +107,7 @@ const PatientChat = () => {
     );
   }
 
+  // Mensagem quando o paciente não está vinculado a nenhum hospital
   if (!hospitalId) {
     return (
       <div className="mx-auto max-w-lg px-4 pt-12 text-center">
@@ -108,6 +124,7 @@ const PatientChat = () => {
     <div className="mx-auto flex max-w-lg flex-col px-4" style={{ height: "calc(100vh - 5rem)" }}>
       <h1 className="py-4 text-xl font-bold text-foreground">Chat com Hospital</h1>
 
+      {/* Área de mensagens com scroll */}
       <div className="flex-1 overflow-y-auto space-y-3 pb-4">
         {messages.length === 0 ? (
           <p className="py-12 text-center text-sm text-muted-foreground">
@@ -134,9 +151,11 @@ const PatientChat = () => {
             );
           })
         )}
+        {/* Elemento âncora para auto-scroll */}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Barra de input para envio de mensagens */}
       <div className="border-t border-border py-3">
         <div className="flex gap-3">
           <Input

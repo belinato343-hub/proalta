@@ -1,17 +1,25 @@
+/**
+ * AdminChat — Chat do administrador hospitalar com pacientes.
+ * Exibe lista de pacientes na sidebar esquerda e a conversa selecionada à direita.
+ * Usa Supabase Realtime para receber mensagens em tempo real.
+ */
+
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Send, User, ArrowLeft } from "lucide-react";
+import { Send, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 
+/** Tipagem de um paciente na lista de conversas */
 interface Patient {
   user_id: string;
   nome: string | null;
   tipo_sonda: string | null;
 }
 
+/** Tipagem de uma mensagem do chat */
 interface Message {
   id: string;
   sender_id: string;
@@ -21,7 +29,7 @@ interface Message {
 
 const AdminChat = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedPatientId = searchParams.get("patient");
+  const selectedPatientId = searchParams.get("patient"); // ID do paciente selecionado via URL
   const { hospitalId } = useUserRole();
   const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -30,6 +38,7 @@ const AdminChat = () => {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Busca a lista de pacientes do hospital
   useEffect(() => {
     if (!hospitalId) return;
     const fetchPatients = async () => {
@@ -42,6 +51,7 @@ const AdminChat = () => {
     fetchPatients();
   }, [hospitalId]);
 
+  // Busca mensagens do paciente selecionado e se inscreve no Realtime
   useEffect(() => {
     if (!selectedPatientId || !hospitalId) return;
 
@@ -57,7 +67,7 @@ const AdminChat = () => {
 
     fetchMessages();
 
-    // Realtime subscription
+    // Inscrição no Supabase Realtime para novas mensagens deste paciente
     const channel = supabase
       .channel(`chat-${selectedPatientId}`)
       .on(
@@ -74,15 +84,18 @@ const AdminChat = () => {
       )
       .subscribe();
 
+    // Remove a inscrição ao trocar de paciente ou desmontar
     return () => {
       supabase.removeChannel(channel);
     };
   }, [selectedPatientId, hospitalId]);
 
+  // Auto-scroll para a última mensagem
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  /** Envia uma mensagem para o paciente selecionado */
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedPatientId || !hospitalId || !user) return;
     setSending(true);
@@ -98,11 +111,12 @@ const AdminChat = () => {
     if (!error) setNewMessage("");
   };
 
+  // Encontra os dados do paciente selecionado para exibir no cabeçalho
   const selectedPatient = patients.find((p) => p.user_id === selectedPatientId);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-6">
-      {/* Patient List */}
+      {/* Sidebar — Lista de pacientes para conversa */}
       <div className="w-72 shrink-0 overflow-y-auto rounded-xl border border-border bg-card">
         <div className="border-b border-border p-4">
           <h2 className="text-sm font-semibold text-foreground">Conversas</h2>
@@ -134,10 +148,11 @@ const AdminChat = () => {
         </div>
       </div>
 
-      {/* Chat Area */}
+      {/* Área do chat */}
       <div className="flex flex-1 flex-col rounded-xl border border-border bg-card">
         {selectedPatientId ? (
           <>
+            {/* Cabeçalho do chat com dados do paciente */}
             <div className="flex items-center gap-3 border-b border-border px-5 py-4">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
                 <User className="h-5 w-5 text-primary" />
@@ -150,6 +165,7 @@ const AdminChat = () => {
               </div>
             </div>
 
+            {/* Área de mensagens */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {messages.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-12">
@@ -176,9 +192,11 @@ const AdminChat = () => {
                   );
                 })
               )}
+              {/* Elemento âncora para auto-scroll */}
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Barra de input para envio de mensagens */}
             <div className="border-t border-border p-4">
               <div className="flex gap-3">
                 <Input
@@ -199,6 +217,7 @@ const AdminChat = () => {
             </div>
           </>
         ) : (
+          /* Placeholder quando nenhum paciente está selecionado */
           <div className="flex flex-1 items-center justify-center">
             <p className="text-muted-foreground">Selecione um paciente para conversar</p>
           </div>
