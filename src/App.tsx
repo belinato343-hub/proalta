@@ -30,6 +30,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import PatientList from "./pages/admin/PatientList";
 import AdminQuestions from "./pages/admin/AdminQuestions";
 import AdminChat from "./pages/admin/AdminChat";
+import Reports from "./pages/admin/Reports";
 
 /** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
