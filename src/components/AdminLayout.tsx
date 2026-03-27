@@ -5,7 +5,7 @@
  */
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
