@@ -115,6 +115,7 @@ const App = () => (
               <Route path="/admin/pacientes" element={<PatientList />} />
               <Route path="/admin/duvidas" element={<AdminQuestions />} />
               <Route path="/admin/chat" element={<AdminChat />} />
+              <Route path="/admin/relatorios" element={<Reports />} />
             </Route>
 
             {/* ===== Rotas protegidas do paciente ===== */}

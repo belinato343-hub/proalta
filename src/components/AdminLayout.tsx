@@ -15,6 +15,7 @@ const sidebarItems = [
   { path: "/admin/pacientes", icon: Users, label: "Pacientes" },
   { path: "/admin/duvidas", icon: HelpCircle, label: "Dúvidas" },
   { path: "/admin/chat", icon: MessageCircle, label: "Chat" },
+  { path: "/admin/relatorios", icon: FileText, label: "Relatórios" },
 ];
 
 const AdminLayout = () => {
