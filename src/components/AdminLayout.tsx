@@ -5,7 +5,7 @@
  */
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
@@ -15,6 +15,7 @@ const sidebarItems = [
   { path: "/admin/pacientes", icon: Users, label: "Pacientes" },
   { path: "/admin/duvidas", icon: HelpCircle, label: "Dúvidas" },
   { path: "/admin/chat", icon: MessageCircle, label: "Chat" },
+  { path: "/admin/relatorios", icon: FileText, label: "Relatórios" },
 ];
 
 const AdminLayout = () => {
