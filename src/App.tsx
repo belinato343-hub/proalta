@@ -31,6 +31,7 @@ import PatientList from "./pages/admin/PatientList";
 import AdminQuestions from "./pages/admin/AdminQuestions";
 import AdminChat from "./pages/admin/AdminChat";
 import Reports from "./pages/admin/Reports";
+import Analytics from "./pages/admin/Analytics";
 
 /** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/admin/duvidas" element={<AdminQuestions />} />
               <Route path="/admin/chat" element={<AdminChat />} />
               <Route path="/admin/relatorios" element={<Reports />} />
+              <Route path="/admin/analytics" element={<Analytics />} />
             </Route>
 
             {/* ===== Rotas protegidas do paciente ===== */}

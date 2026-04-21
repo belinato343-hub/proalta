@@ -5,13 +5,14 @@
  */
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut, FileText } from "lucide-react";
+import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut, FileText, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
 /** Itens do menu lateral do painel admin */
 const sidebarItems = [
   { path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { path: "/admin/analytics", icon: BarChart3, label: "Analytics" },
   { path: "/admin/pacientes", icon: Users, label: "Pacientes" },
   { path: "/admin/duvidas", icon: HelpCircle, label: "Dúvidas" },
   { path: "/admin/chat", icon: MessageCircle, label: "Chat" },
