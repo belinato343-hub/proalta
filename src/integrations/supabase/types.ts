@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          hospital_id: string | null
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string
+          hospital_id?: string | null
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          hospital_id?: string | null
+          id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_logs_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -158,6 +190,50 @@ export type Database = {
           },
         ]
       }
+      readmissions: {
+        Row: {
+          created_at: string
+          hospital_id: string
+          id: string
+          notes: string | null
+          patient_id: string
+          readmission_date: string
+          reason: string | null
+          registered_by: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hospital_id: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          readmission_date: string
+          reason?: string | null
+          registered_by: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          readmission_date?: string
+          reason?: string | null
+          registered_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "readmissions_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -175,6 +251,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      video_views: {
+        Row: {
+          completion_percent: number
+          created_at: string
+          hospital_id: string | null
+          id: string
+          patient_id: string
+          video_id: string
+          video_title: string
+          watched_seconds: number
+        }
+        Insert: {
+          completion_percent?: number
+          created_at?: string
+          hospital_id?: string | null
+          id?: string
+          patient_id: string
+          video_id: string
+          video_title: string
+          watched_seconds?: number
+        }
+        Update: {
+          completion_percent?: number
+          created_at?: string
+          hospital_id?: string | null
+          id?: string
+          patient_id?: string
+          video_id?: string
+          video_title?: string
+          watched_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_views_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

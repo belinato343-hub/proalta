@@ -1,24 +1,60 @@
 /**
  * VideoLibrary — Biblioteca de vídeos educativos sobre cuidados com a sonda.
- * Exibe uma grade de cards com thumbnail, título, categoria e duração.
- * Nota: Os vídeos são mock (dados estáticos). Integração real pode ser adicionada futuramente.
+ * Registra automaticamente a visualização (video_views) quando o paciente clica em um vídeo.
+ * Os vídeos são mock (dados estáticos) — quando integrar player real, registrar tempo assistido também.
  */
 
-import { PlayCircle, Clock } from "lucide-react";
+import { useState } from "react";
+import { PlayCircle, Clock, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-/** Dados mockados dos vídeos educativos */
+/** Dados mockados dos vídeos educativos. `id` é estável e usado para analytics. */
 const videos = [
-  { title: "Higiene da Sonda", duration: "3:20", category: "Cuidados Básicos", thumbnail: "🧼" },
-  { title: "Preparo da Dieta Enteral", duration: "4:15", category: "Alimentação", thumbnail: "🥣" },
-  { title: "Posicionamento do Paciente", duration: "2:45", category: "Posição", thumbnail: "🛏️" },
-  { title: "Limpeza de Materiais", duration: "3:00", category: "Higiene", thumbnail: "✨" },
-  { title: "Administração da Dieta", duration: "5:10", category: "Alimentação", thumbnail: "💧" },
-  { title: "Prevenção de Complicações", duration: "4:30", category: "Segurança", thumbnail: "🛡️" },
-  { title: "Cuidados com Gastrostomia", duration: "3:50", category: "Sonda", thumbnail: "🩺" },
-  { title: "Sinais de Alerta", duration: "2:30", category: "Segurança", thumbnail: "⚠️" },
+  { id: "higiene-sonda", title: "Higiene da Sonda", duration: "3:20", durationSeconds: 200, category: "Cuidados Básicos", thumbnail: "🧼" },
+  { id: "preparo-dieta", title: "Preparo da Dieta Enteral", duration: "4:15", durationSeconds: 255, category: "Alimentação", thumbnail: "🥣" },
+  { id: "posicionamento", title: "Posicionamento do Paciente", duration: "2:45", durationSeconds: 165, category: "Posição", thumbnail: "🛏️" },
+  { id: "limpeza-materiais", title: "Limpeza de Materiais", duration: "3:00", durationSeconds: 180, category: "Higiene", thumbnail: "✨" },
+  { id: "administracao-dieta", title: "Administração da Dieta", duration: "5:10", durationSeconds: 310, category: "Alimentação", thumbnail: "💧" },
+  { id: "prevencao-complicacoes", title: "Prevenção de Complicações", duration: "4:30", durationSeconds: 270, category: "Segurança", thumbnail: "🛡️" },
+  { id: "cuidados-gastrostomia", title: "Cuidados com Gastrostomia", duration: "3:50", durationSeconds: 230, category: "Sonda", thumbnail: "🩺" },
+  { id: "sinais-alerta", title: "Sinais de Alerta", duration: "2:30", durationSeconds: 150, category: "Segurança", thumbnail: "⚠️" },
 ];
 
 const VideoLibrary = () => {
+  const { user } = useAuth();
+  const [activeVideo, setActiveVideo] = useState<typeof videos[0] | null>(null);
+
+  /**
+   * Registra a visualização do vídeo na tabela video_views.
+   * Como ainda não há player real, assumimos visualização total (100%) ao abrir.
+   * Quando integrar player real, capturar progresso real do onTimeUpdate.
+   */
+  const trackView = async (video: typeof videos[0]) => {
+    if (!user) return;
+
+    // Busca hospital do paciente para vincular a métrica
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("hospital_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    await supabase.from("video_views").insert({
+      patient_id: user.id,
+      hospital_id: profile?.hospital_id ?? null,
+      video_id: video.id,
+      video_title: video.title,
+      watched_seconds: video.durationSeconds,
+      completion_percent: 100,
+    });
+  };
+
+  const handleOpen = (video: typeof videos[0]) => {
+    setActiveVideo(video);
+    trackView(video);
+  };
+
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       <h1 className="mb-1 text-xl font-bold text-foreground animate-fade-in">Biblioteca de Vídeos</h1>
@@ -28,7 +64,8 @@ const VideoLibrary = () => {
       <div className="grid grid-cols-2 gap-3">
         {videos.map((video, index) => (
           <button
-            key={video.title}
+            key={video.id}
+            onClick={() => handleOpen(video)}
             className="animate-slide-up group flex flex-col rounded-xl bg-card border border-border shadow-sm overflow-hidden text-left transition-all hover:shadow-md hover:border-primary/30 active:scale-[0.98]"
             style={{ animationDelay: `${index * 0.06}s` }}
           >
@@ -51,6 +88,35 @@ const VideoLibrary = () => {
           </button>
         ))}
       </div>
+
+      {/* Modal simulando player de vídeo (placeholder até integração real) */}
+      {activeVideo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4 animate-fade-in"
+          onClick={() => setActiveVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setActiveVideo(null)}
+              className="absolute right-3 top-3 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+              aria-label="Fechar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mb-4 flex h-48 items-center justify-center rounded-xl bg-primary/5 text-7xl">
+              {activeVideo.thumbnail}
+            </div>
+            <p className="text-xs font-medium text-primary mb-1">{activeVideo.category}</p>
+            <h2 className="text-lg font-bold text-foreground">{activeVideo.title}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Player de vídeo será integrado em breve. Sua visualização foi registrada.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
