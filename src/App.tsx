@@ -32,6 +32,7 @@ import AdminQuestions from "./pages/admin/AdminQuestions";
 import AdminChat from "./pages/admin/AdminChat";
 import Reports from "./pages/admin/Reports";
 import Analytics from "./pages/admin/Analytics";
+import Readmissions from "./pages/admin/Readmissions";
 
 /** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
@@ -118,6 +119,7 @@ const App = () => (
               <Route path="/admin/chat" element={<AdminChat />} />
               <Route path="/admin/relatorios" element={<Reports />} />
               <Route path="/admin/analytics" element={<Analytics />} />
+              <Route path="/admin/reinternacoes" element={<Readmissions />} />
             </Route>
 
             {/* ===== Rotas protegidas do paciente ===== */}
