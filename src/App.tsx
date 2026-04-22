@@ -50,7 +50,7 @@ const queryClient = new QueryClient();
  */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading: authLoading } = useAuth();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { isAdmin, isHomecare, loading: roleLoading } = useUserRole();
 
   if (authLoading || roleLoading) {
     return (
@@ -61,13 +61,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   if (!session) return <Navigate to="/login" replace />;
   if (isAdmin) return <Navigate to="/admin" replace />;
+  if (isHomecare) return <Navigate to="/homecare" replace />;
   return <>{children}</>;
 };
 
 /**
  * Guarda de rota para administradores hospitalares.
- * - Redireciona para /login se não houver sessão.
- * - Redireciona para / se o usuário não for admin.
  */
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading: authLoading } = useAuth();
@@ -82,6 +81,25 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }
   if (!session) return <Navigate to="/login" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+/**
+ * Guarda de rota para empresas de Home Care.
+ */
+const HomecareRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, loading: authLoading } = useAuth();
+  const { isHomecare, loading: roleLoading } = useUserRole();
+
+  if (authLoading || roleLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+  if (!session) return <Navigate to="/login" replace />;
+  if (!isHomecare) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -126,6 +144,15 @@ const App = () => (
               <Route path="/admin/relatorios" element={<Reports />} />
               <Route path="/admin/analytics" element={<Analytics />} />
               <Route path="/admin/reinternacoes" element={<Readmissions />} />
+              <Route path="/admin/modulos" element={<Modules />} />
+              <Route path="/admin/terapias" element={<PatientTherapies />} />
+            </Route>
+
+            {/* ===== Rotas do painel Home Care (B2B) ===== */}
+            <Route element={<HomecareRoute><HomecareLayout /></HomecareRoute>}>
+              <Route path="/homecare" element={<HomecareDashboard />} />
+              <Route path="/homecare/pacientes" element={<HomecarePatients />} />
+              <Route path="/homecare/analytics" element={<HomecareAnalytics />} />
             </Route>
 
             {/* ===== Rotas protegidas do paciente ===== */}
