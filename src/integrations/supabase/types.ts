@@ -81,6 +81,69 @@ export type Database = {
           },
         ]
       }
+      homecare_companies: {
+        Row: {
+          admin_user_id: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hospital_modules: {
+        Row: {
+          enabled_at: string
+          enabled_by: string | null
+          hospital_id: string
+          id: string
+          module_id: string
+        }
+        Insert: {
+          enabled_at?: string
+          enabled_by?: string | null
+          hospital_id: string
+          id?: string
+          module_id: string
+        }
+        Update: {
+          enabled_at?: string
+          enabled_by?: string | null
+          hospital_id?: string
+          id?: string
+          module_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_modules_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_modules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "therapy_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospitals: {
         Row: {
           admin_user_id: string | null
@@ -104,6 +167,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      patient_homecare: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          company_id: string
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          company_id: string
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          company_id?: string
+          id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_homecare_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "homecare_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_therapies: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          hospital_id: string | null
+          id: string
+          module_id: string
+          patient_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          hospital_id?: string | null
+          id?: string
+          module_id: string
+          patient_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          hospital_id?: string | null
+          id?: string
+          module_id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_therapies_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_therapies_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "therapy_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -234,6 +371,36 @@ export type Database = {
           },
         ]
       }
+      therapy_modules: {
+        Row: {
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -305,9 +472,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_homecare_admin_of: { Args: { _company_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "patient" | "hospital_admin"
+      app_role: "patient" | "hospital_admin" | "homecare_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -435,7 +603,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["patient", "hospital_admin"],
+      app_role: ["patient", "hospital_admin", "homecare_admin"],
     },
   },
 } as const

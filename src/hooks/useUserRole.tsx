@@ -1,7 +1,7 @@
 /**
  * useUserRole — Hook para verificar a role (papel) do usuário logado.
- * Consulta a tabela user_roles para saber se é paciente ou hospital_admin.
- * Se for admin, também busca o hospital_id vinculado.
+ * Suporta: patient, hospital_admin, homecare_admin.
+ * Quando hospital_admin: também busca o hospital_id vinculado.
  */
 
 import { useState, useEffect } from "react";
@@ -12,19 +12,19 @@ export const useUserRole = () => {
   const { user } = useAuth();
   const [role, setRole] = useState<string | null>(null);
   const [hospitalId, setHospitalId] = useState<string | null>(null);
+  const [homecareCompanyId, setHomecareCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Se não há usuário logado, reseta os estados
     if (!user) {
       setRole(null);
       setHospitalId(null);
+      setHomecareCompanyId(null);
       setLoading(false);
       return;
     }
 
     const fetchRole = async () => {
-      // Busca a role do usuário na tabela user_roles
       const { data } = await supabase
         .from("user_roles")
         .select("role")
@@ -34,7 +34,6 @@ export const useUserRole = () => {
       const userRole = data?.role ?? "patient";
       setRole(userRole);
 
-      // Se for admin hospitalar, busca o ID do hospital vinculado
       if (userRole === "hospital_admin") {
         const { data: hospital } = await supabase
           .from("hospitals")
@@ -42,6 +41,13 @@ export const useUserRole = () => {
           .eq("admin_user_id", user.id)
           .maybeSingle();
         setHospitalId(hospital?.id ?? null);
+      } else if (userRole === "homecare_admin") {
+        const { data: company } = await supabase
+          .from("homecare_companies")
+          .select("id")
+          .eq("admin_user_id", user.id)
+          .maybeSingle();
+        setHomecareCompanyId(company?.id ?? null);
       }
 
       setLoading(false);
@@ -50,5 +56,12 @@ export const useUserRole = () => {
     fetchRole();
   }, [user]);
 
-  return { role, hospitalId, loading, isAdmin: role === "hospital_admin" };
+  return {
+    role,
+    hospitalId,
+    homecareCompanyId,
+    loading,
+    isAdmin: role === "hospital_admin",
+    isHomecare: role === "homecare_admin",
+  };
 };
