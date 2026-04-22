@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import AppLayout from "./components/AppLayout";
 import AdminLayout from "./components/AdminLayout";
+import HomecareLayout from "./components/HomecareLayout";
 import Home from "./pages/Home";
 import VideoLibrary from "./pages/VideoLibrary";
 import Guides from "./pages/Guides";
@@ -33,6 +34,11 @@ import AdminChat from "./pages/admin/AdminChat";
 import Reports from "./pages/admin/Reports";
 import Analytics from "./pages/admin/Analytics";
 import Readmissions from "./pages/admin/Readmissions";
+import Modules from "./pages/admin/Modules";
+import PatientTherapies from "./pages/admin/PatientTherapies";
+import HomecareDashboard from "./pages/homecare/HomecareDashboard";
+import HomecarePatients from "./pages/homecare/HomecarePatients";
+import HomecareAnalytics from "./pages/homecare/HomecareAnalytics";
 
 /** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
