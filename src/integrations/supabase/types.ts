@@ -200,6 +200,76 @@ export type Database = {
           },
         ]
       }
+      patient_invites: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string
+          hospital_id: string | null
+          id: string
+          module_id: string | null
+          notes: string | null
+          patient_name: string | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          token: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by: string
+          hospital_id?: string | null
+          id?: string
+          module_id?: string | null
+          notes?: string | null
+          patient_name?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          hospital_id?: string | null
+          id?: string
+          module_id?: string | null
+          notes?: string | null
+          patient_name?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "homecare_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_invites_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_invites_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "therapy_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_therapies: {
         Row: {
           assigned_at: string
@@ -465,6 +535,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_invite_preview: {
+        Args: { _token: string }
+        Returns: {
+          company_name: string
+          hospital_name: string
+          module_name: string
+          patient_name: string
+          reason: string
+          valid: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
