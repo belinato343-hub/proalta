@@ -1,32 +1,77 @@
 /**
- * Signup — Tela de cadastro de novos pacientes.
- * Suporta cadastro por e-mail/senha e Google OAuth.
- * Após o cadastro, redireciona para o login com mensagem de confirmação de e-mail.
+ * Signup — Cadastro de pacientes via convite (token).
+ * 
+ * Fluxo:
+ * 1. Lê ?invite=TOKEN da URL
+ * 2. Sem token → redireciona para /cadastro/sem-convite (landing explicativa)
+ * 3. Com token → valida via RPC get_invite_preview e mostra hospital/empresa/terapia
+ * 4. Se válido, formulário pede nome/email/senha
+ * 5. Submete para edge function redeem-invite que cria conta + vincula tudo
+ * 6. Após sucesso, faz login automático e redireciona para /
  */
 
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, Building2, AlertTriangle } from "lucide-react";
+
+interface InvitePreview {
+  valid: boolean;
+  hospital_name: string | null;
+  company_name: string | null;
+  module_name: string | null;
+  patient_name: string | null;
+  reason: string;
+}
+
+const REASON_LABELS: Record<string, string> = {
+  not_found: "Convite não encontrado. Verifique o link recebido.",
+  revoked: "Este convite foi revogado pelo administrador.",
+  already_used: "Este convite já foi utilizado para criar uma conta.",
+};
 
 const Signup = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("invite");
+
+  const [preview, setPreview] = useState<InvitePreview | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  /** Realiza o cadastro com e-mail e senha */
+  // Sem token → redireciona para landing explicativa
+  useEffect(() => {
+    if (!token) {
+      navigate("/cadastro/sem-convite", { replace: true });
+      return;
+    }
+    const validate = async () => {
+      const { data, error } = await supabase.rpc("get_invite_preview", { _token: token });
+      if (error || !data || data.length === 0) {
+        setPreview({ valid: false, hospital_name: null, company_name: null, module_name: null, patient_name: null, reason: "not_found" });
+      } else {
+        const row = data[0] as InvitePreview;
+        setPreview(row);
+        if (row.patient_name) setNome(row.patient_name);
+      }
+      setChecking(false);
+    };
+    validate();
+  }, [token, navigate]);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validações locais antes de enviar ao servidor
     if (password !== confirmPassword) {
       toast.error("As senhas não coincidem");
       return;
@@ -35,91 +80,119 @@ const Signup = () => {
       toast.error("A senha deve ter no mínimo 6 caracteres");
       return;
     }
+    if (nome.trim().length < 2) {
+      toast.error("Informe seu nome completo");
+      return;
+    }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
+    const { data, error } = await supabase.functions.invoke("redeem-invite", {
+      body: { token, email, password, nome: nome.trim() },
     });
+    
+    if (error || (data as any)?.error) {
+      const msg = (data as any)?.error ?? error?.message ?? "Erro ao criar conta";
+      toast.error("Não foi possível criar a conta", { description: msg });
+      setLoading(false);
+      return;
+    }
+
+    // Login automático
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
 
-    if (error) {
-      toast.error("Erro ao criar conta", { description: error.message });
-    } else {
-      toast.success("Conta criada!", {
-        description: "Verifique seu e-mail para confirmar o cadastro.",
-      });
+    if (signInErr) {
+      toast.success("Conta criada!", { description: "Faça login para continuar." });
       navigate("/login");
+    } else {
+      toast.success("Bem-vindo!", { description: "Conta criada com sucesso." });
+      navigate("/");
     }
   };
 
-  /** Inicia o fluxo de cadastro com Google OAuth */
-  const handleGoogleSignup = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) {
-      toast.error("Erro ao cadastrar com Google", { description: error.message });
-    }
-  };
+  // Estado de carregamento da validação
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Convite inválido
+  if (!preview?.valid) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md border-border shadow-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
+              <AlertTriangle className="h-7 w-7 text-destructive" />
+            </div>
+            <CardTitle className="text-2xl text-foreground">Convite inválido</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              {REASON_LABELS[preview?.reason ?? "not_found"] ?? "Este convite não pode ser usado."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-center text-sm text-muted-foreground">
+              Solicite um novo convite ao seu hospital ou empresa de Home Care.
+            </p>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/login">Voltar para o login</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const orgName = preview.hospital_name ?? preview.company_name;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <Card className="w-full max-w-md animate-fade-in border-border shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
             <span className="text-2xl font-bold text-primary">P</span>
           </div>
-          <CardTitle className="text-2xl text-foreground">Criar conta</CardTitle>
+          <CardTitle className="text-2xl text-foreground">Criar sua conta</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Cadastre-se para acessar o ProAlta
+            Você foi convidado para o ProAlta
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Botão de cadastro com Google */}
-          <Button
-            variant="outline"
-            className="w-full gap-2 border-border text-foreground"
-            onClick={handleGoogleSignup}
-            type="button"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Cadastrar com Google
-          </Button>
-
-          {/* Divisor visual */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">ou</span>
+          {/* Card de contexto do convite */}
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-start gap-3">
+              <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">{orgName}</p>
+                {preview.module_name && (
+                  <p className="text-xs text-muted-foreground">
+                    Terapia: <span className="font-medium text-foreground">{preview.module_name}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Formulário de cadastro */}
           <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome" className="text-foreground">Nome completo</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input id="nome" type="text" placeholder="Seu nome" value={nome}
+                  onChange={(e) => setNome(e.target.value)} className="pl-10" required maxLength={120} />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">E-mail</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+                <Input id="email" type="email" placeholder="seu@email.com" value={email}
+                  onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
               </div>
             </div>
 
@@ -127,20 +200,11 @@ const Signup = () => {
               <Label htmlFor="password" className="text-foreground">Senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 6 caracteres"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
+                <Input id="password" type={showPassword ? "text" : "password"}
+                  placeholder="Mínimo 6 caracteres" value={password}
+                  onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10" required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -150,15 +214,9 @@ const Signup = () => {
               <Label htmlFor="confirmPassword" className="text-foreground">Confirmar senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Repita a senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+                <Input id="confirmPassword" type={showPassword ? "text" : "password"}
+                  placeholder="Repita a senha" value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10" required />
               </div>
             </div>
 
@@ -168,13 +226,10 @@ const Signup = () => {
           </form>
         </CardContent>
 
-        {/* Link para quem já tem conta */}
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">
             Já tem conta?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">
-              Entrar
-            </Link>
+            <Link to="/login" className="font-medium text-primary hover:underline">Entrar</Link>
           </p>
         </CardFooter>
       </Card>
