@@ -27,7 +27,8 @@ interface Props {
 
 const InvitesManager = ({ hospitalId, companyId, title, description }: Props) => {
   const { invites, loading, createInvite, revokeInvite } = useInvites({ hospitalId, companyId });
-  const { modules: hospitalModules } = useHospitalModules(hospitalId ?? undefined);
+  const { enabled: hospitalEnabledModules } = useHospitalModules(hospitalId ?? null);
+  const hospitalModules = hospitalEnabledModules.map((hm) => hm.module);
 
   const [open, setOpen] = useState(false);
   const [patientName, setPatientName] = useState("");
@@ -44,7 +45,8 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
     });
     setSubmitting(false);
     if (error) {
-      toast.error("Erro ao gerar convite", { description: error.message });
+      const msg = typeof error === "string" ? error : error.message;
+      toast.error("Erro ao gerar convite", { description: msg });
     } else {
       toast.success("Convite gerado!");
       setPatientName(""); setModuleId("none"); setNotes("");
