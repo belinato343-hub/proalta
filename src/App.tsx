@@ -24,6 +24,7 @@ import Questions from "./pages/Questions";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import SignupNoInvite from "./pages/SignupNoInvite";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -36,9 +37,11 @@ import Analytics from "./pages/admin/Analytics";
 import Readmissions from "./pages/admin/Readmissions";
 import Modules from "./pages/admin/Modules";
 import PatientTherapies from "./pages/admin/PatientTherapies";
+import AdminInvites from "./pages/admin/AdminInvites";
 import HomecareDashboard from "./pages/homecare/HomecareDashboard";
 import HomecarePatients from "./pages/homecare/HomecarePatients";
 import HomecareAnalytics from "./pages/homecare/HomecareAnalytics";
+import HomecareInvites from "./pages/homecare/HomecareInvites";
 
 /** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
@@ -131,7 +134,8 @@ const App = () => (
           <Routes>
             {/* ===== Rotas públicas de autenticação ===== */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/cadastro" element={<PublicRoute><Signup /></PublicRoute>} />
+            <Route path="/cadastro" element={<Signup />} />
+            <Route path="/cadastro/sem-convite" element={<SignupNoInvite />} />
             <Route path="/esqueci-senha" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
 
@@ -139,6 +143,7 @@ const App = () => (
             <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/pacientes" element={<PatientList />} />
+              <Route path="/admin/convites" element={<AdminInvites />} />
               <Route path="/admin/duvidas" element={<AdminQuestions />} />
               <Route path="/admin/chat" element={<AdminChat />} />
               <Route path="/admin/relatorios" element={<Reports />} />
@@ -153,6 +158,7 @@ const App = () => (
               <Route path="/homecare" element={<HomecareDashboard />} />
               <Route path="/homecare/pacientes" element={<HomecarePatients />} />
               <Route path="/homecare/analytics" element={<HomecareAnalytics />} />
+              <Route path="/homecare/convites" element={<HomecareInvites />} />
             </Route>
 
             {/* ===== Rotas protegidas do paciente ===== */}

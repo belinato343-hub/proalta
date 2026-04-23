@@ -4,7 +4,7 @@
  */
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BarChart3, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, BarChart3, LogOut, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
@@ -12,6 +12,7 @@ const items = [
   { path: "/homecare", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/homecare/analytics", icon: BarChart3, label: "Analytics" },
   { path: "/homecare/pacientes", icon: Users, label: "Pacientes" },
+  { path: "/homecare/convites", icon: Mail, label: "Convites" },
 ];
 
 const HomecareLayout = () => {
