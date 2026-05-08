@@ -193,6 +193,9 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
               <div className="flex shrink-0 gap-2">
                 {!inv.redeemed_at && !inv.revoked_at && (
                   <>
+                    <Button size="sm" variant="outline" onClick={() => setQrInvite(inv)} className="gap-1.5">
+                      <QrCode className="h-3.5 w-3.5" />QR code
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => copyLink(inv.token)} className="gap-1.5">
                       <Copy className="h-3.5 w-3.5" />Copiar link
                     </Button>
@@ -207,6 +210,37 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
           ))}
         </div>
       )}
+
+      <Dialog open={!!qrInvite} onOpenChange={(o) => !o && setQrInvite(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>QR code do convite</DialogTitle>
+            <DialogDescription>
+              {qrInvite?.patient_name
+                ? `Convite para ${qrInvite.patient_name}. Imprima e anexe à alta.`
+                : "Imprima e anexe à alta do paciente."}
+            </DialogDescription>
+          </DialogHeader>
+          {qrInvite && (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <div ref={qrPrintRef} className="rounded-lg border border-border bg-white p-4">
+                <QRCodeCanvas value={inviteUrl(qrInvite.token)} size={240} level="M" includeMargin={false} />
+              </div>
+              <p className="break-all text-center text-xs text-muted-foreground">
+                {inviteUrl(qrInvite.token)}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => qrInvite && copyLink(qrInvite.token)} className="gap-2">
+              <Copy className="h-4 w-4" />Copiar link
+            </Button>
+            <Button onClick={() => qrInvite && printQr(qrInvite)} className="gap-2">
+              <Printer className="h-4 w-4" />Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
