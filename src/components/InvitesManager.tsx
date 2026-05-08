@@ -33,10 +33,44 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
   const hospitalModules = hospitalEnabledModules.map((hm) => hm.module);
 
   const [open, setOpen] = useState(false);
+  const [qrInvite, setQrInvite] = useState<Invite | null>(null);
+  const qrPrintRef = useRef<HTMLDivElement>(null);
   const [patientName, setPatientName] = useState("");
   const [moduleId, setModuleId] = useState<string>("none");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const inviteUrl = (token: string) => `${window.location.origin}/cadastro?invite=${token}`;
+
+  const printQr = (inv: Invite) => {
+    const url = inviteUrl(inv.token);
+    const canvas = qrPrintRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+    const dataUrl = canvas?.toDataURL("image/png") ?? "";
+    const win = window.open("", "_blank", "width=600,height=800");
+    if (!win) { toast.error("Bloqueado pelo navegador", { description: "Permita pop-ups para imprimir." }); return; }
+    win.document.write(`
+      <html><head><title>Convite ProAlta — ${inv.patient_name ?? "Paciente"}</title>
+      <style>
+        body { font-family: ui-sans-serif, system-ui, sans-serif; padding: 32px; text-align: center; color: #0f172a; }
+        h1 { font-size: 22px; margin: 0 0 4px; }
+        h2 { font-size: 16px; font-weight: 500; color: #475569; margin: 0 0 24px; }
+        img { width: 280px; height: 280px; margin: 16px auto; display: block; }
+        .url { font-size: 12px; word-break: break-all; color: #475569; margin-top: 16px; }
+        .footer { margin-top: 32px; font-size: 12px; color: #64748b; }
+        .name { margin-top: 24px; font-size: 18px; font-weight: 600; }
+      </style></head>
+      <body>
+        <h1>ProAlta — Convite de cadastro</h1>
+        <h2>Escaneie o QR code para criar sua conta</h2>
+        ${inv.patient_name ? `<div class="name">${inv.patient_name}</div>` : ""}
+        <img src="${dataUrl}" alt="QR code" />
+        <div class="url">${url}</div>
+        <div class="footer">Este link é único e pessoal. Não compartilhe.</div>
+        <script>window.onload = () => { window.print(); };</script>
+      </body></html>
+    `);
+    win.document.close();
+  };
 
   const handleCreate = async () => {
     setSubmitting(true);
