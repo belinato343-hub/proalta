@@ -91,8 +91,7 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
   };
 
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/cadastro?invite=${token}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(inviteUrl(token));
     toast.success("Link copiado!", { description: "Envie ao paciente." });
   };
 
