@@ -16,7 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Copy, Ban, Link as LinkIcon, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Plus, Copy, Ban, Link as LinkIcon, CheckCircle2, XCircle, Clock, QrCode, Printer } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
+import { useRef } from "react";
 
 interface Props {
   hospitalId?: string | null;
@@ -31,10 +33,44 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
   const hospitalModules = hospitalEnabledModules.map((hm) => hm.module);
 
   const [open, setOpen] = useState(false);
+  const [qrInvite, setQrInvite] = useState<Invite | null>(null);
+  const qrPrintRef = useRef<HTMLDivElement>(null);
   const [patientName, setPatientName] = useState("");
   const [moduleId, setModuleId] = useState<string>("none");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const inviteUrl = (token: string) => `${window.location.origin}/cadastro?invite=${token}`;
+
+  const printQr = (inv: Invite) => {
+    const url = inviteUrl(inv.token);
+    const canvas = qrPrintRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+    const dataUrl = canvas?.toDataURL("image/png") ?? "";
+    const win = window.open("", "_blank", "width=600,height=800");
+    if (!win) { toast.error("Bloqueado pelo navegador", { description: "Permita pop-ups para imprimir." }); return; }
+    win.document.write(`
+      <html><head><title>Convite ProAlta — ${inv.patient_name ?? "Paciente"}</title>
+      <style>
+        body { font-family: ui-sans-serif, system-ui, sans-serif; padding: 32px; text-align: center; color: #0f172a; }
+        h1 { font-size: 22px; margin: 0 0 4px; }
+        h2 { font-size: 16px; font-weight: 500; color: #475569; margin: 0 0 24px; }
+        img { width: 280px; height: 280px; margin: 16px auto; display: block; }
+        .url { font-size: 12px; word-break: break-all; color: #475569; margin-top: 16px; }
+        .footer { margin-top: 32px; font-size: 12px; color: #64748b; }
+        .name { margin-top: 24px; font-size: 18px; font-weight: 600; }
+      </style></head>
+      <body>
+        <h1>ProAlta — Convite de cadastro</h1>
+        <h2>Escaneie o QR code para criar sua conta</h2>
+        ${inv.patient_name ? `<div class="name">${inv.patient_name}</div>` : ""}
+        <img src="${dataUrl}" alt="QR code" />
+        <div class="url">${url}</div>
+        <div class="footer">Este link é único e pessoal. Não compartilhe.</div>
+        <script>window.onload = () => { window.print(); };</script>
+      </body></html>
+    `);
+    win.document.close();
+  };
 
   const handleCreate = async () => {
     setSubmitting(true);
@@ -55,8 +91,7 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
   };
 
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/cadastro?invite=${token}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(inviteUrl(token));
     toast.success("Link copiado!", { description: "Envie ao paciente." });
   };
 
@@ -158,6 +193,9 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
               <div className="flex shrink-0 gap-2">
                 {!inv.redeemed_at && !inv.revoked_at && (
                   <>
+                    <Button size="sm" variant="outline" onClick={() => setQrInvite(inv)} className="gap-1.5">
+                      <QrCode className="h-3.5 w-3.5" />QR code
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => copyLink(inv.token)} className="gap-1.5">
                       <Copy className="h-3.5 w-3.5" />Copiar link
                     </Button>
@@ -172,6 +210,37 @@ const InvitesManager = ({ hospitalId, companyId, title, description }: Props) =>
           ))}
         </div>
       )}
+
+      <Dialog open={!!qrInvite} onOpenChange={(o) => !o && setQrInvite(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>QR code do convite</DialogTitle>
+            <DialogDescription>
+              {qrInvite?.patient_name
+                ? `Convite para ${qrInvite.patient_name}. Imprima e anexe à alta.`
+                : "Imprima e anexe à alta do paciente."}
+            </DialogDescription>
+          </DialogHeader>
+          {qrInvite && (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <div ref={qrPrintRef} className="rounded-lg border border-border bg-white p-4">
+                <QRCodeCanvas value={inviteUrl(qrInvite.token)} size={240} level="M" includeMargin={false} />
+              </div>
+              <p className="break-all text-center text-xs text-muted-foreground">
+                {inviteUrl(qrInvite.token)}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => qrInvite && copyLink(qrInvite.token)} className="gap-2">
+              <Copy className="h-4 w-4" />Copiar link
+            </Button>
+            <Button onClick={() => qrInvite && printQr(qrInvite)} className="gap-2">
+              <Printer className="h-4 w-4" />Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
