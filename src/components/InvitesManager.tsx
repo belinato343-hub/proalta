@@ -16,7 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Copy, Ban, Link as LinkIcon, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Plus, Copy, Ban, Link as LinkIcon, CheckCircle2, XCircle, Clock, QrCode, Printer } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
+import { useRef } from "react";
 
 interface Props {
   hospitalId?: string | null;
