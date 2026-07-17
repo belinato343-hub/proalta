@@ -8,21 +8,30 @@ import { useState } from "react";
 import { PlayCircle, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePatientTherapies } from "@/hooks/usePatientTherapies";
 
-/** Dados mockados dos vídeos educativos. `id` é estável e usado para analytics. */
+/** Dados mockados dos vídeos educativos. `id` é estável e usado para analytics.
+ *  `modules` referencia slugs de therapy_modules — usado para filtrar por terapia do paciente. */
 const videos = [
-  { id: "higiene-sonda", title: "Higiene da Sonda", duration: "3:20", durationSeconds: 200, category: "Cuidados Básicos", thumbnail: "🧼" },
-  { id: "preparo-dieta", title: "Preparo da Dieta Enteral", duration: "4:15", durationSeconds: 255, category: "Alimentação", thumbnail: "🥣" },
-  { id: "posicionamento", title: "Posicionamento do Paciente", duration: "2:45", durationSeconds: 165, category: "Posição", thumbnail: "🛏️" },
-  { id: "limpeza-materiais", title: "Limpeza de Materiais", duration: "3:00", durationSeconds: 180, category: "Higiene", thumbnail: "✨" },
-  { id: "administracao-dieta", title: "Administração da Dieta", duration: "5:10", durationSeconds: 310, category: "Alimentação", thumbnail: "💧" },
-  { id: "prevencao-complicacoes", title: "Prevenção de Complicações", duration: "4:30", durationSeconds: 270, category: "Segurança", thumbnail: "🛡️" },
-  { id: "cuidados-gastrostomia", title: "Cuidados com Gastrostomia", duration: "3:50", durationSeconds: 230, category: "Sonda", thumbnail: "🩺" },
-  { id: "sinais-alerta", title: "Sinais de Alerta", duration: "2:30", durationSeconds: 150, category: "Segurança", thumbnail: "⚠️" },
+  { id: "higiene-sonda", title: "Higiene da Sonda", duration: "3:20", durationSeconds: 200, category: "Cuidados Básicos", thumbnail: "🧼", modules: ["nutricao-enteral"] },
+  { id: "preparo-dieta", title: "Preparo da Dieta Enteral", duration: "4:15", durationSeconds: 255, category: "Alimentação", thumbnail: "🥣", modules: ["nutricao-enteral"] },
+  { id: "posicionamento", title: "Posicionamento do Paciente", duration: "2:45", durationSeconds: 165, category: "Posição", thumbnail: "🛏️", modules: ["nutricao-enteral"] },
+  { id: "limpeza-materiais", title: "Limpeza de Materiais", duration: "3:00", durationSeconds: 180, category: "Higiene", thumbnail: "✨", modules: ["nutricao-enteral", "ostomia", "traqueostomia", "curativos"] },
+  { id: "administracao-dieta", title: "Administração da Dieta", duration: "5:10", durationSeconds: 310, category: "Alimentação", thumbnail: "💧", modules: ["nutricao-enteral"] },
+  { id: "prevencao-complicacoes", title: "Prevenção de Complicações", duration: "4:30", durationSeconds: 270, category: "Segurança", thumbnail: "🛡️", modules: ["nutricao-enteral", "ostomia", "traqueostomia", "dialise", "curativos"] },
+  { id: "cuidados-gastrostomia", title: "Cuidados com Gastrostomia", duration: "3:50", durationSeconds: 230, category: "Sonda", thumbnail: "🩺", modules: ["nutricao-enteral"] },
+  { id: "sinais-alerta", title: "Sinais de Alerta", duration: "2:30", durationSeconds: 150, category: "Segurança", thumbnail: "⚠️", modules: ["nutricao-enteral", "ostomia", "traqueostomia", "dialise", "curativos"] },
+  { id: "cuidados-ostomia", title: "Cuidados com Ostomia", duration: "3:40", durationSeconds: 220, category: "Ostomia", thumbnail: "🫁", modules: ["ostomia"] },
+  { id: "troca-bolsa-ostomia", title: "Troca da Bolsa de Ostomia", duration: "4:00", durationSeconds: 240, category: "Ostomia", thumbnail: "👜", modules: ["ostomia"] },
+  { id: "cuidados-traqueo", title: "Aspiração de Traqueostomia", duration: "3:20", durationSeconds: 200, category: "Traqueostomia", thumbnail: "🌬️", modules: ["traqueostomia"] },
+  { id: "cuidados-dialise", title: "Cuidados com Cateter de Diálise", duration: "4:10", durationSeconds: 250, category: "Diálise", thumbnail: "💧", modules: ["dialise"] },
+  { id: "troca-curativo", title: "Troca de Curativo", duration: "3:00", durationSeconds: 180, category: "Curativos", thumbnail: "🩹", modules: ["curativos"] },
 ];
 
 const VideoLibrary = () => {
   const { user } = useAuth();
+  const { filter } = usePatientTherapies();
+  const visibleVideos = filter(videos);
   const [activeVideo, setActiveVideo] = useState<typeof videos[0] | null>(null);
 
   /**
