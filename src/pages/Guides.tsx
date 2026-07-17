@@ -6,48 +6,85 @@
 
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { usePatientTherapies } from "@/hooks/usePatientTherapies";
 
-/** Categorias de orientações disponíveis */
+/** Categorias de orientações disponíveis. `modules` = slugs de therapy_modules. */
 const guideCategories = [
   {
     title: "Sonda Nasogástrica",
     description: "Cuidados e orientações para sonda nasogástrica",
     emoji: "🔵",
     id: "nasogastrica",
+    modules: ["nutricao-enteral"],
   },
   {
     title: "Sonda Nasoenteral",
     description: "Orientações para sonda nasoenteral",
     emoji: "🟢",
     id: "nasoenteral",
+    modules: ["nutricao-enteral"],
   },
   {
     title: "Gastrostomia",
     description: "Cuidados com gastrostomia (GTT)",
     emoji: "🟡",
     id: "gastrostomia",
+    modules: ["nutricao-enteral"],
   },
   {
     title: "Jejunostomia",
     description: "Orientações para jejunostomia",
     emoji: "🟠",
     id: "jejunostomia",
+    modules: ["nutricao-enteral"],
+  },
+  {
+    title: "Cuidados com Ostomia",
+    description: "Higiene, troca de bolsa e prevenção de irritação",
+    emoji: "🫁",
+    id: "ostomia",
+    modules: ["ostomia"],
+  },
+  {
+    title: "Traqueostomia",
+    description: "Aspiração, umidificação e troca de cânula",
+    emoji: "🌬️",
+    id: "traqueostomia",
+    modules: ["traqueostomia"],
+  },
+  {
+    title: "Diálise Peritoneal / Cateter",
+    description: "Cuidados com o cateter e sinais de infecção",
+    emoji: "💧",
+    id: "dialise",
+    modules: ["dialise"],
+  },
+  {
+    title: "Curativos",
+    description: "Troca de curativos e cuidados com feridas",
+    emoji: "🩹",
+    id: "curativos",
+    modules: ["curativos"],
   },
 ];
 
 const Guides = () => {
   const navigate = useNavigate();
+  const { filter, hasAny } = usePatientTherapies();
+  const visible = filter(guideCategories);
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       <h1 className="mb-1 text-xl font-bold text-foreground animate-fade-in">Orientações</h1>
       <p className="mb-6 text-sm text-muted-foreground animate-fade-in">
-        Selecione o tipo de sonda para ver as orientações
+        {hasAny
+          ? "Orientações personalizadas para as suas terapias"
+          : "Selecione o tipo de sonda para ver as orientações"}
       </p>
 
-      {/* Lista de categorias de sonda */}
+      {/* Lista de categorias filtradas pelas terapias do paciente */}
       <div className="flex flex-col gap-3">
-        {guideCategories.map((cat, index) => (
+        {visible.map((cat, index) => (
           <button
             key={cat.id}
             onClick={() => navigate(`/orientacoes/${cat.id}`)}
