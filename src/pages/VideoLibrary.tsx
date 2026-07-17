@@ -71,7 +71,7 @@ const VideoLibrary = () => {
 
       {/* Grid de cards de vídeos */}
       <div className="grid grid-cols-2 gap-3">
-        {videos.map((video, index) => (
+        {visibleVideos.map((video, index) => (
           <button
             key={video.id}
             onClick={() => handleOpen(video)}

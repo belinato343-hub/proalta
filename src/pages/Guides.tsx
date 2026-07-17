@@ -6,32 +6,65 @@
 
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { usePatientTherapies } from "@/hooks/usePatientTherapies";
 
-/** Categorias de orientações disponíveis */
+/** Categorias de orientações disponíveis. `modules` = slugs de therapy_modules. */
 const guideCategories = [
   {
     title: "Sonda Nasogástrica",
     description: "Cuidados e orientações para sonda nasogástrica",
     emoji: "🔵",
     id: "nasogastrica",
+    modules: ["nutricao-enteral"],
   },
   {
     title: "Sonda Nasoenteral",
     description: "Orientações para sonda nasoenteral",
     emoji: "🟢",
     id: "nasoenteral",
+    modules: ["nutricao-enteral"],
   },
   {
     title: "Gastrostomia",
     description: "Cuidados com gastrostomia (GTT)",
     emoji: "🟡",
     id: "gastrostomia",
+    modules: ["nutricao-enteral"],
   },
   {
     title: "Jejunostomia",
     description: "Orientações para jejunostomia",
     emoji: "🟠",
     id: "jejunostomia",
+    modules: ["nutricao-enteral"],
+  },
+  {
+    title: "Cuidados com Ostomia",
+    description: "Higiene, troca de bolsa e prevenção de irritação",
+    emoji: "🫁",
+    id: "ostomia",
+    modules: ["ostomia"],
+  },
+  {
+    title: "Traqueostomia",
+    description: "Aspiração, umidificação e troca de cânula",
+    emoji: "🌬️",
+    id: "traqueostomia",
+    modules: ["traqueostomia"],
+  },
+  {
+    title: "Diálise Peritoneal / Cateter",
+    description: "Cuidados com o cateter e sinais de infecção",
+    emoji: "💧",
+    id: "dialise",
+    modules: ["dialise"],
+  },
+  {
+    title: "Curativos",
+    description: "Troca de curativos e cuidados com feridas",
+    emoji: "🩹",
+    id: "curativos",
+    modules: ["curativos"],
   },
 ];
 
