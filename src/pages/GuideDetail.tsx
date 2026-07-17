@@ -50,6 +50,46 @@ const guideSteps: Record<string, { title: string; steps: { title: string; instru
       { title: "Lavagem", instruction: "Lave a sonda com água filtrada antes e após cada uso." },
       { title: "Atenção", instruction: "Nunca administre medicamentos sem orientação. Procure a equipe em caso de dor ou vazamento." },
     ],
+  ostomia: {
+    title: "Cuidados com Ostomia",
+    steps: [
+      { title: "Higiene das Mãos", instruction: "Lave as mãos com água e sabão antes de tocar na bolsa ou no estoma." },
+      { title: "Avaliação do Estoma", instruction: "Observe cor (deve ser rosado/vermelho vivo), umidade e ausência de sangramento anormal." },
+      { title: "Troca da Bolsa", instruction: "Retire a bolsa suavemente, empurrando a pele para baixo. Limpe com água morna e sabão neutro, sem esfregar." },
+      { title: "Proteção da Pele", instruction: "Seque bem a região. Recorte a placa no tamanho exato do estoma para evitar irritação." },
+      { title: "Fixação", instruction: "Aplique a nova placa/bolsa pressionando suavemente por alguns segundos. Verifique se ficou bem aderida." },
+      { title: "Sinais de Alerta", instruction: "Procure a equipe em caso de sangramento, mudança de cor do estoma, dor intensa ou vazamento persistente." },
+    ],
+  },
+  traqueostomia: {
+    title: "Cuidados com Traqueostomia",
+    steps: [
+      { title: "Higiene das Mãos", instruction: "Lave bem as mãos antes de manipular a cânula ou realizar aspiração." },
+      { title: "Aspiração", instruction: "Utilize sonda estéril, aspire por no máximo 10-15 segundos, respeitando o intervalo entre as aspirações." },
+      { title: "Umidificação", instruction: "Mantenha o ar úmido para evitar ressecamento das secreções. Use nebulização conforme orientado." },
+      { title: "Limpeza do Estoma", instruction: "Limpe a pele ao redor da traqueostomia com soro fisiológico e gaze estéril. Troque o cadarço de fixação diariamente." },
+      { title: "Sinais de Alerta", instruction: "Procure atendimento em caso de dificuldade respiratória, sangramento, secreção com odor forte ou febre." },
+    ],
+  },
+  dialise: {
+    title: "Cuidados com Diálise / Cateter",
+    steps: [
+      { title: "Higiene das Mãos", instruction: "Sempre lave as mãos e use máscara ao manipular o cateter." },
+      { title: "Inspeção Diária", instruction: "Observe o local de inserção do cateter — sinais de vermelhidão, calor, dor ou secreção devem ser comunicados." },
+      { title: "Curativo", instruction: "Mantenha o curativo seco e íntegro. Troque conforme orientação da equipe." },
+      { title: "Cuidados com o Banho", instruction: "Proteja o cateter durante o banho com filme plástico. Não mergulhe em banheira ou piscina." },
+      { title: "Sinais de Alerta", instruction: "Febre, calafrios, dor ou saída do cateter — procure atendimento imediato." },
+    ],
+  },
+  curativos: {
+    title: "Troca de Curativos",
+    steps: [
+      { title: "Higiene das Mãos", instruction: "Lave as mãos e utilize luvas descartáveis." },
+      { title: "Remoção do Curativo", instruction: "Retire o curativo antigo com cuidado. Se estiver aderido, umedeça com soro fisiológico." },
+      { title: "Limpeza", instruction: "Limpe a ferida com soro fisiológico do centro para as bordas, com gaze estéril." },
+      { title: "Aplicação", instruction: "Aplique o produto/cobertura conforme prescrição. Cubra com gaze e fixe com fita adesiva." },
+      { title: "Observação", instruction: "Anote aspecto da ferida (cor, exsudato, odor). Comunique a equipe em caso de piora." },
+    ],
   },
 };
 
