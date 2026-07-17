@@ -50,6 +50,7 @@ const guideSteps: Record<string, { title: string; steps: { title: string; instru
       { title: "Lavagem", instruction: "Lave a sonda com água filtrada antes e após cada uso." },
       { title: "Atenção", instruction: "Nunca administre medicamentos sem orientação. Procure a equipe em caso de dor ou vazamento." },
     ],
+  },
   ostomia: {
     title: "Cuidados com Ostomia",
     steps: [
