@@ -9,17 +9,26 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 
-/** Itens do checklist de cuidados diários */
+import { usePatientTherapies } from "@/hooks/usePatientTherapies";
+
+/** Itens do checklist de cuidados diários. `modules` = slugs de therapy_modules.
+ *  Itens sem `modules` são gerais (aparecem para todos os pacientes). */
 const checklistItems = [
-  { id: 1, text: "Lavei as mãos antes de manipular a sonda" },
-  { id: 2, text: "Verifiquei a posição/marcação da sonda" },
-  { id: 3, text: "Preparei a dieta conforme orientação" },
-  { id: 4, text: "Mantive o paciente sentado ou com cabeceira elevada" },
-  { id: 5, text: "Administrei a dieta lentamente" },
-  { id: 6, text: "Lavei a sonda com água filtrada após o uso" },
-  { id: 7, text: "Limpei a pele ao redor da sonda/estoma" },
+  { id: 1, text: "Lavei as mãos antes de manipular a sonda/estoma" },
+  { id: 2, text: "Verifiquei a posição/marcação da sonda", modules: ["nutricao-enteral"] },
+  { id: 3, text: "Preparei a dieta conforme orientação", modules: ["nutricao-enteral"] },
+  { id: 4, text: "Mantive o paciente sentado ou com cabeceira elevada", modules: ["nutricao-enteral"] },
+  { id: 5, text: "Administrei a dieta lentamente", modules: ["nutricao-enteral"] },
+  { id: 6, text: "Lavei a sonda com água filtrada após o uso", modules: ["nutricao-enteral"] },
+  { id: 7, text: "Limpei a pele ao redor da sonda/estoma", modules: ["nutricao-enteral", "ostomia"] },
   { id: 8, text: "Verifiquei se há sinais de vermelhidão ou vazamento" },
   { id: 9, text: "Guardei os materiais em local limpo e seco" },
+  { id: 10, text: "Troquei a bolsa de ostomia conforme orientado", modules: ["ostomia"] },
+  { id: 11, text: "Verifiquei a pele ao redor do estoma da ostomia", modules: ["ostomia"] },
+  { id: 12, text: "Realizei a aspiração de traqueostomia com técnica limpa", modules: ["traqueostomia"] },
+  { id: 13, text: "Umidifiquei a cânula de traqueostomia", modules: ["traqueostomia"] },
+  { id: 14, text: "Higienizei o local de inserção do cateter de diálise", modules: ["dialise"] },
+  { id: 15, text: "Troquei o curativo conforme orientação", modules: ["curativos"] },
 ];
 
 const Checklist = () => {
