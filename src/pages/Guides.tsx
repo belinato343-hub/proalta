@@ -70,17 +70,21 @@ const guideCategories = [
 
 const Guides = () => {
   const navigate = useNavigate();
+  const { filter, hasAny } = usePatientTherapies();
+  const visible = filter(guideCategories);
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       <h1 className="mb-1 text-xl font-bold text-foreground animate-fade-in">Orientações</h1>
       <p className="mb-6 text-sm text-muted-foreground animate-fade-in">
-        Selecione o tipo de sonda para ver as orientações
+        {hasAny
+          ? "Orientações personalizadas para as suas terapias"
+          : "Selecione o tipo de sonda para ver as orientações"}
       </p>
 
-      {/* Lista de categorias de sonda */}
+      {/* Lista de categorias filtradas pelas terapias do paciente */}
       <div className="flex flex-col gap-3">
-        {guideCategories.map((cat, index) => (
+        {visible.map((cat, index) => (
           <button
             key={cat.id}
             onClick={() => navigate(`/orientacoes/${cat.id}`)}
