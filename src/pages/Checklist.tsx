@@ -45,8 +45,13 @@ const Checklist = () => {
     });
   };
 
-  /** Calcula a porcentagem de progresso */
-  const progress = Math.round((checked.size / checklistItems.length) * 100);
+  /** Filtra itens por terapias atribuídas ao paciente */
+  const { filter } = usePatientTherapies();
+  const visibleItems = filter(checklistItems);
+
+  /** Calcula a porcentagem de progresso considerando apenas os itens visíveis */
+  const visibleChecked = visibleItems.filter((i) => checked.has(i.id)).length;
+  const progress = visibleItems.length === 0 ? 0 : Math.round((visibleChecked / visibleItems.length) * 100);
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
@@ -65,7 +70,7 @@ const Checklist = () => {
       {/* Barra de progresso */}
       <div className="mb-6 animate-fade-in">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-foreground">{checked.size} de {checklistItems.length}</span>
+          <span className="text-sm font-medium text-foreground">{visibleChecked} de {visibleItems.length}</span>
           <span className="text-sm font-semibold text-primary">{progress}%</span>
         </div>
         <div className="h-2.5 rounded-full bg-muted overflow-hidden">
@@ -78,7 +83,7 @@ const Checklist = () => {
 
       {/* Lista de itens do checklist */}
       <div className="flex flex-col gap-2">
-        {checklistItems.map((item, index) => {
+        {visibleItems.map((item, index) => {
           const isChecked = checked.has(item.id);
           return (
             <button
