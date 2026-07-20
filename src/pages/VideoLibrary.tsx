@@ -1,48 +1,71 @@
 /**
- * VideoLibrary — Biblioteca de vídeos educativos sobre cuidados com a sonda.
- * Registra automaticamente a visualização (video_views) quando o paciente clica em um vídeo.
- * Os vídeos são mock (dados estáticos) — quando integrar player real, registrar tempo assistido também.
+ * VideoLibrary — Biblioteca de vídeos educativos.
+ * Consome a tabela `videos` (globais + do hospital do paciente), filtra por terapias
+ * atribuídas (usePatientTherapies) e reproduz via iframe do YouTube/Vimeo.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlayCircle, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePatientTherapies } from "@/hooks/usePatientTherapies";
+import { getEmbedUrl, getAutoThumbnail } from "@/lib/videoEmbed";
 
-/** Dados mockados dos vídeos educativos. `id` é estável e usado para analytics.
- *  `modules` referencia slugs de therapy_modules — usado para filtrar por terapia do paciente. */
-const videos = [
-  { id: "higiene-sonda", title: "Higiene da Sonda", duration: "3:20", durationSeconds: 200, category: "Cuidados Básicos", thumbnail: "🧼", modules: ["nutricao-enteral"] },
-  { id: "preparo-dieta", title: "Preparo da Dieta Enteral", duration: "4:15", durationSeconds: 255, category: "Alimentação", thumbnail: "🥣", modules: ["nutricao-enteral"] },
-  { id: "posicionamento", title: "Posicionamento do Paciente", duration: "2:45", durationSeconds: 165, category: "Posição", thumbnail: "🛏️", modules: ["nutricao-enteral"] },
-  { id: "limpeza-materiais", title: "Limpeza de Materiais", duration: "3:00", durationSeconds: 180, category: "Higiene", thumbnail: "✨", modules: ["nutricao-enteral", "ostomia", "traqueostomia", "curativos"] },
-  { id: "administracao-dieta", title: "Administração da Dieta", duration: "5:10", durationSeconds: 310, category: "Alimentação", thumbnail: "💧", modules: ["nutricao-enteral"] },
-  { id: "prevencao-complicacoes", title: "Prevenção de Complicações", duration: "4:30", durationSeconds: 270, category: "Segurança", thumbnail: "🛡️", modules: ["nutricao-enteral", "ostomia", "traqueostomia", "dialise", "curativos"] },
-  { id: "cuidados-gastrostomia", title: "Cuidados com Gastrostomia", duration: "3:50", durationSeconds: 230, category: "Sonda", thumbnail: "🩺", modules: ["nutricao-enteral"] },
-  { id: "sinais-alerta", title: "Sinais de Alerta", duration: "2:30", durationSeconds: 150, category: "Segurança", thumbnail: "⚠️", modules: ["nutricao-enteral", "ostomia", "traqueostomia", "dialise", "curativos"] },
-  { id: "cuidados-ostomia", title: "Cuidados com Ostomia", duration: "3:40", durationSeconds: 220, category: "Ostomia", thumbnail: "🫁", modules: ["ostomia"] },
-  { id: "troca-bolsa-ostomia", title: "Troca da Bolsa de Ostomia", duration: "4:00", durationSeconds: 240, category: "Ostomia", thumbnail: "👜", modules: ["ostomia"] },
-  { id: "cuidados-traqueo", title: "Aspiração de Traqueostomia", duration: "3:20", durationSeconds: 200, category: "Traqueostomia", thumbnail: "🌬️", modules: ["traqueostomia"] },
-  { id: "cuidados-dialise", title: "Cuidados com Cateter de Diálise", duration: "4:10", durationSeconds: 250, category: "Diálise", thumbnail: "💧", modules: ["dialise"] },
-  { id: "troca-curativo", title: "Troca de Curativo", duration: "3:00", durationSeconds: 180, category: "Curativos", thumbnail: "🩹", modules: ["curativos"] },
-];
+interface Video {
+  id: string;
+  hospital_id: string | null;
+  title: string;
+  description: string | null;
+  category: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  emoji: string | null;
+  duration_seconds: number;
+  modules: string[]; // slugs — nome usado pelo filtro do usePatientTherapies
+}
+
+const formatDuration = (s: number) => {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+};
 
 const VideoLibrary = () => {
   const { user } = useAuth();
   const { filter } = usePatientTherapies();
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("videos")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order")
+      .then(({ data }) => {
+        const mapped: Video[] = (data ?? []).map((v: any) => ({
+          id: v.id,
+          hospital_id: v.hospital_id,
+          title: v.title,
+          description: v.description,
+          category: v.category,
+          video_url: v.video_url,
+          thumbnail_url: v.thumbnail_url,
+          emoji: v.emoji,
+          duration_seconds: v.duration_seconds,
+          modules: v.module_slugs ?? [],
+        }));
+        setVideos(mapped);
+        setLoading(false);
+      });
+  }, []);
+
   const visibleVideos = filter(videos);
-  const [activeVideo, setActiveVideo] = useState<typeof videos[0] | null>(null);
 
-  /**
-   * Registra a visualização do vídeo na tabela video_views.
-   * Como ainda não há player real, assumimos visualização total (100%) ao abrir.
-   * Quando integrar player real, capturar progresso real do onTimeUpdate.
-   */
-  const trackView = async (video: typeof videos[0]) => {
+  /** Registra a visualização quando o paciente abre o vídeo. */
+  const trackView = async (video: Video) => {
     if (!user) return;
-
-    // Busca hospital do paciente para vincular a métrica
     const { data: profile } = await supabase
       .from("profiles")
       .select("hospital_id")
@@ -54,12 +77,12 @@ const VideoLibrary = () => {
       hospital_id: profile?.hospital_id ?? null,
       video_id: video.id,
       video_title: video.title,
-      watched_seconds: video.durationSeconds,
+      watched_seconds: video.duration_seconds,
       completion_percent: 100,
     });
   };
 
-  const handleOpen = (video: typeof videos[0]) => {
+  const handleOpen = (video: Video) => {
     setActiveVideo(video);
     trackView(video);
   };
@@ -67,62 +90,108 @@ const VideoLibrary = () => {
   return (
     <div className="mx-auto max-w-lg px-4 pt-6">
       <h1 className="mb-1 text-xl font-bold text-foreground animate-fade-in">Biblioteca de Vídeos</h1>
-      <p className="mb-6 text-sm text-muted-foreground animate-fade-in">Vídeos educativos sobre cuidados com a sonda</p>
+      <p className="mb-6 text-sm text-muted-foreground animate-fade-in">
+        Vídeos educativos sobre seus cuidados
+      </p>
 
-      {/* Grid de cards de vídeos */}
-      <div className="grid grid-cols-2 gap-3">
-        {visibleVideos.map((video, index) => (
-          <button
-            key={video.id}
-            onClick={() => handleOpen(video)}
-            className="animate-slide-up group flex flex-col rounded-xl bg-card border border-border shadow-sm overflow-hidden text-left transition-all hover:shadow-md hover:border-primary/30 active:scale-[0.98]"
-            style={{ animationDelay: `${index * 0.06}s` }}
-          >
-            {/* Área de thumbnail com ícone de play */}
-            <div className="relative flex h-28 items-center justify-center bg-primary/5">
-              <span className="text-4xl">{video.thumbnail}</span>
-              <div className="absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors group-hover:bg-foreground/5">
-                <PlayCircle className="h-10 w-10 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </div>
-            {/* Informações do vídeo */}
-            <div className="p-3">
-              <p className="text-xs font-medium text-primary mb-1">{video.category}</p>
-              <h3 className="text-sm font-semibold text-foreground leading-tight">{video.title}</h3>
-              <div className="mt-2 flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span className="text-xs">{video.duration}</span>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : visibleVideos.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
+          Nenhum vídeo disponível ainda.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {visibleVideos.map((video, index) => {
+            const thumb = video.thumbnail_url || getAutoThumbnail(video.video_url);
+            return (
+              <button
+                key={video.id}
+                onClick={() => handleOpen(video)}
+                className="animate-slide-up group flex flex-col rounded-xl bg-card border border-border shadow-sm overflow-hidden text-left transition-all hover:shadow-md hover:border-primary/30 active:scale-[0.98]"
+                style={{ animationDelay: `${index * 0.06}s` }}
+              >
+                <div className="relative flex h-28 items-center justify-center overflow-hidden bg-primary/5">
+                  {thumb ? (
+                    <img src={thumb} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-4xl">{video.emoji ?? "🎬"}</span>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors group-hover:bg-foreground/20">
+                    <PlayCircle className="h-10 w-10 text-white opacity-90 drop-shadow-lg" />
+                  </div>
+                </div>
+                <div className="p-3">
+                  <p className="text-xs font-medium text-primary mb-1">{video.category}</p>
+                  <h3 className="text-sm font-semibold text-foreground leading-tight">{video.title}</h3>
+                  {video.duration_seconds > 0 && (
+                    <div className="mt-2 flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span className="text-xs">{formatDuration(video.duration_seconds)}</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Modal simulando player de vídeo (placeholder até integração real) */}
+      {/* Player em modal com iframe do YouTube/Vimeo */}
       {activeVideo && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/80 p-4 animate-fade-in"
           onClick={() => setActiveVideo(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl"
+            className="relative w-full max-w-2xl rounded-2xl bg-card p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setActiveVideo(null)}
-              className="absolute right-3 top-3 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+              className="absolute right-3 top-3 z-10 rounded-full bg-card/80 p-1.5 text-muted-foreground hover:bg-muted"
               aria-label="Fechar"
             >
               <X className="h-5 w-5" />
             </button>
-            <div className="mb-4 flex h-48 items-center justify-center rounded-xl bg-primary/5 text-7xl">
-              {activeVideo.thumbnail}
+            {(() => {
+              const embed = getEmbedUrl(activeVideo.video_url);
+              if (embed) {
+                return (
+                  <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
+                    <iframe
+                      src={embed}
+                      title={activeVideo.title}
+                      className="absolute inset-0 h-full w-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                );
+              }
+              return (
+                <div className="flex aspect-video items-center justify-center rounded-xl bg-primary/5">
+                  <div className="text-center">
+                    <span className="block text-7xl">{activeVideo.emoji ?? "🎬"}</span>
+                    <a
+                      href={activeVideo.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-block text-sm font-medium text-primary underline"
+                    >
+                      Abrir vídeo
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="p-2 pt-4">
+              <p className="text-xs font-medium text-primary mb-1">{activeVideo.category}</p>
+              <h2 className="text-lg font-bold text-foreground">{activeVideo.title}</h2>
+              {activeVideo.description && (
+                <p className="mt-2 text-sm text-muted-foreground">{activeVideo.description}</p>
+              )}
             </div>
-            <p className="text-xs font-medium text-primary mb-1">{activeVideo.category}</p>
-            <h2 className="text-lg font-bold text-foreground">{activeVideo.title}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Player de vídeo será integrado em breve. Sua visualização foi registrada.
-            </p>
           </div>
         </div>
       )}

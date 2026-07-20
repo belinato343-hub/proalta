@@ -5,7 +5,7 @@
  */
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut, FileText, BarChart3, AlertTriangle, Package, Stethoscope, Mail } from "lucide-react";
+import { LayoutDashboard, Users, MessageCircle, HelpCircle, LogOut, FileText, BarChart3, AlertTriangle, Package, Stethoscope, Mail, Video } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 
@@ -17,6 +17,7 @@ const sidebarItems = [
   { path: "/admin/convites", icon: Mail, label: "Convites" },
   { path: "/admin/modulos", icon: Package, label: "Módulos" },
   { path: "/admin/terapias", icon: Stethoscope, label: "Terapias" },
+  { path: "/admin/videos", icon: Video, label: "Vídeos" },
   { path: "/admin/duvidas", icon: HelpCircle, label: "Dúvidas" },
   { path: "/admin/chat", icon: MessageCircle, label: "Chat" },
   { path: "/admin/reinternacoes", icon: AlertTriangle, label: "Reinternações" },
