@@ -38,6 +38,7 @@ import Readmissions from "./pages/admin/Readmissions";
 import Modules from "./pages/admin/Modules";
 import PatientTherapies from "./pages/admin/PatientTherapies";
 import AdminInvites from "./pages/admin/AdminInvites";
+import AdminVideos from "./pages/admin/AdminVideos";
 import HomecareDashboard from "./pages/homecare/HomecareDashboard";
 import HomecarePatients from "./pages/homecare/HomecarePatients";
 import HomecareAnalytics from "./pages/homecare/HomecareAnalytics";
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="/admin/reinternacoes" element={<Readmissions />} />
               <Route path="/admin/modulos" element={<Modules />} />
               <Route path="/admin/terapias" element={<PatientTherapies />} />
+              <Route path="/admin/videos" element={<AdminVideos />} />
             </Route>
 
             {/* ===== Rotas do painel Home Care (B2B) ===== */}
