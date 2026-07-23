@@ -145,7 +145,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
             {/* ===== Rotas públicas de autenticação ===== */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/cadastro" element={<Signup />} />
@@ -190,7 +191,8 @@ const App = () => (
 
             {/* Rota de fallback — página não encontrada */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
