@@ -4,6 +4,7 @@
  * e os guardas de rota (ProtectedRoute, AdminRoute, PublicRoute).
  */
 
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,41 +12,53 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+
+// Layouts continuam eager — sempre necessários para as rotas correspondentes
 import AppLayout from "./components/AppLayout";
 import AdminLayout from "./components/AdminLayout";
 import HomecareLayout from "./components/HomecareLayout";
-import Home from "./pages/Home";
-import VideoLibrary from "./pages/VideoLibrary";
-import Guides from "./pages/Guides";
-import GuideDetail from "./pages/GuideDetail";
-import Checklist from "./pages/Checklist";
-import PatientChat from "./pages/PatientChat";
-import Questions from "./pages/Questions";
-import Profile from "./pages/Profile";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import SignupNoInvite from "./pages/SignupNoInvite";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/admin/Dashboard";
-import PatientList from "./pages/admin/PatientList";
-import AdminQuestions from "./pages/admin/AdminQuestions";
-import AdminChat from "./pages/admin/AdminChat";
-import Reports from "./pages/admin/Reports";
-import Analytics from "./pages/admin/Analytics";
-import Readmissions from "./pages/admin/Readmissions";
-import Modules from "./pages/admin/Modules";
-import PatientTherapies from "./pages/admin/PatientTherapies";
-import AdminInvites from "./pages/admin/AdminInvites";
-import AdminVideos from "./pages/admin/AdminVideos";
-import HomecareDashboard from "./pages/homecare/HomecareDashboard";
-import HomecarePatients from "./pages/homecare/HomecarePatients";
-import HomecareAnalytics from "./pages/homecare/HomecareAnalytics";
-import HomecareInvites from "./pages/homecare/HomecareInvites";
+
+// Páginas via lazy() → cada rota vira um chunk separado (code-splitting)
+const Home = lazy(() => import("./pages/Home"));
+const VideoLibrary = lazy(() => import("./pages/VideoLibrary"));
+const Guides = lazy(() => import("./pages/Guides"));
+const GuideDetail = lazy(() => import("./pages/GuideDetail"));
+const Checklist = lazy(() => import("./pages/Checklist"));
+const PatientChat = lazy(() => import("./pages/PatientChat"));
+const Questions = lazy(() => import("./pages/Questions"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const SignupNoInvite = lazy(() => import("./pages/SignupNoInvite"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const PatientList = lazy(() => import("./pages/admin/PatientList"));
+const AdminQuestions = lazy(() => import("./pages/admin/AdminQuestions"));
+const AdminChat = lazy(() => import("./pages/admin/AdminChat"));
+const Reports = lazy(() => import("./pages/admin/Reports"));
+const Analytics = lazy(() => import("./pages/admin/Analytics"));
+const Readmissions = lazy(() => import("./pages/admin/Readmissions"));
+const Modules = lazy(() => import("./pages/admin/Modules"));
+const PatientTherapies = lazy(() => import("./pages/admin/PatientTherapies"));
+const AdminInvites = lazy(() => import("./pages/admin/AdminInvites"));
+const AdminVideos = lazy(() => import("./pages/admin/AdminVideos"));
+const HomecareDashboard = lazy(() => import("./pages/homecare/HomecareDashboard"));
+const HomecarePatients = lazy(() => import("./pages/homecare/HomecarePatients"));
+const HomecareAnalytics = lazy(() => import("./pages/homecare/HomecareAnalytics"));
+const HomecareInvites = lazy(() => import("./pages/homecare/HomecareInvites"));
+
+/** Fallback exibido enquanto o chunk da rota é baixado */
+const RouteFallback = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+);
 
 /** Instância do React Query para cache e gerenciamento de estado assíncrono */
 const queryClient = new QueryClient();
+
 
 /**
  * Guarda de rota para pacientes autenticados.
@@ -132,7 +145,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
             {/* ===== Rotas públicas de autenticação ===== */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/cadastro" element={<Signup />} />
@@ -177,7 +191,8 @@ const App = () => (
 
             {/* Rota de fallback — página não encontrada */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
