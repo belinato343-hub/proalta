@@ -190,6 +190,7 @@ const App = () => (
               <Route path="/duvidas" element={<Questions />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/perfil/notificacoes" element={<Notifications />} />
+              <Route path="/perfil/documentos" element={<MyDocuments />} />
             </Route>
 
             {/* Rota de fallback — página não encontrada */}
