@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 /** Itens do menu inferior do perfil */
 const menuItems = [
-  { icon: FileText, label: "Meus Documentos", description: "Orientações salvas", path: "/orientacoes" },
+  { icon: FileText, label: "Meus Documentos", description: "Resumo de alta e orientações", path: "/perfil/documentos" },
   { icon: Bell, label: "Notificações", description: "Gerenciar lembretes", path: "/perfil/notificacoes" },
   { icon: HelpCircle, label: "Ajuda", description: "Suporte e contato", path: "/chat" },
 ];
