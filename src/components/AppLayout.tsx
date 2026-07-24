@@ -7,6 +7,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Home, PlayCircle, MessageCircle, User, MessagesSquare } from "lucide-react";
 import { useTrackAccess } from "@/hooks/useTrackAccess";
+import { useNotificationScheduler } from "@/hooks/useNotificationScheduler";
 
 /** Definição das abas da barra de navegação inferior */
 const tabs = [
@@ -23,6 +24,7 @@ const AppLayout = () => {
 
   // Registra acesso do paciente automaticamente ao entrar no app
   useTrackAccess();
+  useNotificationScheduler();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
