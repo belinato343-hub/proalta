@@ -17,9 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 /** Itens do menu inferior do perfil */
 const menuItems = [
-  { icon: FileText, label: "Meus Documentos", description: "Orientações salvas" },
-  { icon: Bell, label: "Notificações", description: "Gerenciar lembretes" },
-  { icon: HelpCircle, label: "Ajuda", description: "Suporte e contato" },
+  { icon: FileText, label: "Meus Documentos", description: "Orientações salvas", path: "/orientacoes" },
+  { icon: Bell, label: "Notificações", description: "Gerenciar lembretes", path: "/perfil/notificacoes" },
+  { icon: HelpCircle, label: "Ajuda", description: "Suporte e contato", path: "/chat" },
 ];
 
 /** Tipos de sonda disponíveis para seleção */
@@ -227,6 +227,7 @@ const Profile = () => {
         {menuItems.map((item, index) => (
           <button
             key={item.label}
+            onClick={() => navigate(item.path)}
             className="animate-slide-up flex items-center gap-4 rounded-xl bg-card border border-border p-4 text-left transition-all hover:shadow-sm hover:border-primary/20 active:scale-[0.98]"
             style={{ animationDelay: `${index * 0.08}s` }}
           >
