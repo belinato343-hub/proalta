@@ -28,6 +28,7 @@ const PatientChat = lazy(() => import("./pages/PatientChat"));
 const Questions = lazy(() => import("./pages/Questions"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const MyDocuments = lazy(() => import("./pages/MyDocuments"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const SignupNoInvite = lazy(() => import("./pages/SignupNoInvite"));
@@ -189,6 +190,7 @@ const App = () => (
               <Route path="/duvidas" element={<Questions />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/perfil/notificacoes" element={<Notifications />} />
+              <Route path="/perfil/documentos" element={<MyDocuments />} />
             </Route>
 
             {/* Rota de fallback — página não encontrada */}
