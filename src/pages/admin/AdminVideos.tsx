@@ -162,6 +162,12 @@ const AdminVideos = () => {
 
   return (
     <div className="max-w-5xl">
+      {!loading && !hospitalId && (
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          Seu usuário administrador não está vinculado a nenhum hospital. Enquanto isso, o cadastro
+          e a edição de vídeos ficam bloqueados.
+        </div>
+      )}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Vídeos Educativos</h1>
