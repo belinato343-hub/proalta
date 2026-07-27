@@ -1,29 +1,23 @@
-## Diagnóstico (verificado no banco)
+## Objetivo
 
-**1. O admin de teste não está vinculado ao hospital**
-- `hospitals` tem uma única linha: "Hospital ProAlta Teste" (`a1b2c3d4-…`) com `admin_user_id = ff20d5a1…` (usuário "Admin Hospital", antigo).
-- O login que você usa (`admin@proalta.test`, `77782b2d…`) tem role `hospital_admin` e `profiles.hospital_id = a1b2c3d4-…`, mas **não** é o `admin_user_id` do hospital.
-- `useUserRole` resolve o hospital por `hospitals.admin_user_id = auth.uid()` → retorna vazio (visível nos logs de rede: `hospitals?...admin_user_id=eq.77782b2d… → []`). Resultado: painéis do admin ficam sem hospital, e telas que dependem de `hospitalId` aparecem vazias.
-- Observação: `AdminVideos` usa outra fonte (`profiles.hospital_id`), ou seja, há **duas formas divergentes** de descobrir o hospital do admin no código.
+Fazer com que `belinatocursos@gmail.com` (papel hospital_admin, hoje sem hospital) enxergue os dados e vídeos do **Hospital ProAlta Teste**.
 
-**2. Os pacientes de teste só têm a terapia "curativos"**
-- João Silva e Pedro: terapias = `[curativos]`. Maria Santos: nenhuma.
-- Os 8 vídeos que você cadastrou têm `module_slugs` = `nutricao-enteral` / `ostomia`.
-- `usePatientTherapies` filtra por terapia → esses vídeos são escondidos para João e Pedro. Maria (sem terapia) cai no fallback e vê tudo.
+## Ponto importante
 
-**3. RLS dos vídeos está correta** — pacientes do hospital `a1b2…` conseguem ler os vídeos do hospital e os globais.
+A tabela `hospitals` tem apenas **um** campo `admin_user_id`, e ele já aponta para `admin@proalta.test`. Sobrescrever esse campo faria o admin de teste perder o vínculo. Por isso o vínculo será feito pelo **perfil** do usuário, que já é o caminho de fallback usado pelo app.
 
-## Correções propostas
+## O que será feito
 
-1. **Migração de dados**: apontar `hospitals.admin_user_id` para o usuário `admin@proalta.test` (`77782b2d…`), mantendo o hospital existente e todos os dados vinculados.
-2. **Unificar a resolução do hospital do admin**: em `useUserRole`, quando a busca por `hospitals.admin_user_id` não retornar nada, usar `profiles.hospital_id` como fallback. Assim admin e telas (Dashboard, Analytics, Convites, Vídeos, Terapias) passam a usar sempre o mesmo hospital.
-3. **Atribuir terapias aos pacientes de teste**: adicionar `nutricao-enteral` (e `ostomia`) para João Silva, Pedro e Maria Santos, para que os vídeos cadastrados apareçam no app do paciente.
-4. **Melhorar a UX de vídeo vazio**: em `VideoLibrary`, quando o paciente tem terapias mas nenhum vídeo corresponde, mostrar mensagem explicando que o conteúdo é filtrado pelas terapias atribuídas (em vez de "Nenhum vídeo disponível").
-5. **Aviso no /admin/videos**: se o admin não tiver hospital resolvido, exibir alerta claro de que o cadastro ficará bloqueado (hoje falha silenciosamente pela RLS de insert).
+1. **Atualizar o perfil do usuário** (alteração de dados, não de estrutura):
+   - Definir `hospital_id = a1b2c3d4-e5f6-7890-abcd-ef1234567890` (Hospital ProAlta Teste) no perfil de `belinatocursos@gmail.com`.
+   - `hospitals.admin_user_id` permanece com `admin@proalta.test`.
+
+2. **Verificar o efeito** com consultas de leitura:
+   - Confirmar que o perfil ficou com o hospital correto.
+   - Confirmar que os vídeos visíveis para esse hospital (globais + do hospital) aparecem na contagem esperada.
 
 ## Detalhes técnicos
 
-- Migração: `UPDATE public.hospitals SET admin_user_id = '77782b2d-…' WHERE id = 'a1b2c3d4-…';` + inserts em `patient_therapies` (módulos `nutricao-enteral`, `ostomia`) para os 3 pacientes, com `ON CONFLICT DO NOTHING`.
-- `src/hooks/useUserRole.tsx`: fallback para `profiles.hospital_id` quando `hospitals` não retorna linha.
-- `src/pages/VideoLibrary.tsx` e `src/pages/admin/AdminVideos.tsx`: apenas mensagens/estados de UI.
-- Verificação final: consultar o banco para confirmar o vínculo e as terapias, e conferir a lista de vídeos visíveis para um paciente.
+O hook `useUserRole` já resolve o hospital de um `hospital_admin` em duas etapas: primeiro procura em `hospitals.admin_user_id` e, se não achar, cai para `profiles.hospital_id`. Como esse fallback já está implementado, nenhuma alteração de código é necessária — apenas o ajuste de dados. As telas `/admin`, `/admin/videos`, `/admin/pacientes` e demais passam a receber o `hospitalId` correto automaticamente.
+
+Se você preferir que `belinatocursos@gmail.com` seja o **dono oficial** do hospital (substituindo `admin@proalta.test` em `hospitals.admin_user_id`), me avise — é uma variação de uma linha, mas o admin de teste perderia o vínculo direto.
