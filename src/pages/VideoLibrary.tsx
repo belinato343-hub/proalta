@@ -98,8 +98,11 @@ const VideoLibrary = () => {
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : visibleVideos.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-          Nenhum vídeo disponível ainda.
+          {videos.length > 0
+            ? "Nenhum vídeo corresponde às terapias atribuídas ao seu perfil. Fale com a equipe do hospital para revisar suas terapias."
+            : "Nenhum vídeo disponível ainda."}
         </p>
+
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {visibleVideos.map((video, index) => {

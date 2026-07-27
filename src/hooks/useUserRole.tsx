@@ -40,7 +40,18 @@ export const useUserRole = () => {
           .select("id")
           .eq("admin_user_id", user.id)
           .maybeSingle();
-        setHospitalId(hospital?.id ?? null);
+
+        if (hospital?.id) {
+          setHospitalId(hospital.id);
+        } else {
+          // Fallback: admin vinculado via profiles.hospital_id (mesma fonte usada em /admin/videos)
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("hospital_id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          setHospitalId(profile?.hospital_id ?? null);
+        }
       } else if (userRole === "homecare_admin") {
         const { data: company } = await supabase
           .from("homecare_companies")
