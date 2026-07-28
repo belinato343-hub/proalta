@@ -198,8 +198,11 @@ const AdminVideos = () => {
             title="Vídeos globais (ProAlta)"
             empty=""
             videos={globalVideos}
-            editable={false}
+            editable
+            onEdit={openEdit}
+            onDelete={remove}
           />
+
         </div>
       )}
 
