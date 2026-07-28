@@ -116,7 +116,7 @@ const AdminVideos = () => {
   };
 
   const save = async () => {
-    if (!hospitalId) {
+    if (!editing && !hospitalId) {
       toast.error("Hospital não identificado");
       return;
     }
@@ -124,16 +124,14 @@ const AdminVideos = () => {
       toast.error("Título e URL do vídeo são obrigatórios");
       return;
     }
-    if (!detectProvider(form.video_url)) {
-      // detectProvider sempre retorna algo — mas alertamos se for unknown
-    }
 
     const payload = {
       ...form,
       description: form.description || null,
       thumbnail_url: form.thumbnail_url || null,
       emoji: form.emoji || null,
-      hospital_id: hospitalId,
+      // Vídeos globais permanecem globais ao serem editados
+      hospital_id: editing ? editing.hospital_id : hospitalId,
     };
 
     if (editing) {
