@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useHospitalModules } from "@/hooks/useHospitalModules";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Pencil, Trash2, X, ExternalLink, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ExternalLink } from "lucide-react";
 import { detectProvider, getAutoThumbnail } from "@/lib/videoEmbed";
 
 interface VideoRow {
