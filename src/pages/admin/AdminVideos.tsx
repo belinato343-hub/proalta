@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useHospitalModules } from "@/hooks/useHospitalModules";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Pencil, Trash2, X, ExternalLink, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ExternalLink } from "lucide-react";
 import { detectProvider, getAutoThumbnail } from "@/lib/videoEmbed";
 
 interface VideoRow {
@@ -116,7 +116,7 @@ const AdminVideos = () => {
   };
 
   const save = async () => {
-    if (!hospitalId) {
+    if (!editing && !hospitalId) {
       toast.error("Hospital não identificado");
       return;
     }
@@ -124,16 +124,14 @@ const AdminVideos = () => {
       toast.error("Título e URL do vídeo são obrigatórios");
       return;
     }
-    if (!detectProvider(form.video_url)) {
-      // detectProvider sempre retorna algo — mas alertamos se for unknown
-    }
 
     const payload = {
       ...form,
       description: form.description || null,
       thumbnail_url: form.thumbnail_url || null,
       emoji: form.emoji || null,
-      hospital_id: hospitalId,
+      // Vídeos globais permanecem globais ao serem editados
+      hospital_id: editing ? editing.hospital_id : hospitalId,
     };
 
     if (editing) {
@@ -200,8 +198,11 @@ const AdminVideos = () => {
             title="Vídeos globais (ProAlta)"
             empty=""
             videos={globalVideos}
-            editable={false}
+            editable
+            onEdit={openEdit}
+            onDelete={remove}
           />
+
         </div>
       )}
 
@@ -283,7 +284,7 @@ const VideoSection = ({
             >
               <ExternalLink className="h-4 w-4" />
             </a>
-            {editable ? (
+            {editable && (
               <>
                 <button
                   onClick={() => onEdit?.(v)}
@@ -300,10 +301,6 @@ const VideoSection = ({
                   <Trash2 className="h-4 w-4" />
                 </button>
               </>
-            ) : (
-              <span className="p-2 text-muted-foreground" title="Somente leitura">
-                <Lock className="h-4 w-4" />
-              </span>
             )}
           </div>
         );
