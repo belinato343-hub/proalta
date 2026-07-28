@@ -284,7 +284,7 @@ const VideoSection = ({
             >
               <ExternalLink className="h-4 w-4" />
             </a>
-            {editable ? (
+            {editable && (
               <>
                 <button
                   onClick={() => onEdit?.(v)}
@@ -301,10 +301,6 @@ const VideoSection = ({
                   <Trash2 className="h-4 w-4" />
                 </button>
               </>
-            ) : (
-              <span className="p-2 text-muted-foreground" title="Somente leitura">
-                <Lock className="h-4 w-4" />
-              </span>
             )}
           </div>
         );
