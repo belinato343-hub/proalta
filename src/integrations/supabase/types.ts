@@ -613,6 +613,7 @@ export type Database = {
         Returns: boolean
       }
       is_homecare_admin_of: { Args: { _company_id: string }; Returns: boolean }
+      is_hospital_admin_of: { Args: { _hospital_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "patient" | "hospital_admin" | "homecare_admin"
