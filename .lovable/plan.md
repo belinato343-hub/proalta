@@ -1,23 +1,25 @@
-## Objetivo
+# Corrigir login homecare@proalta.test e liberar acesso de teste como paciente
 
-Fazer com que `belinatocursos@gmail.com` (papel hospital_admin, hoje sem hospital) enxergue os dados e vídeos do **Hospital ProAlta Teste**.
+## Diagnóstico (confirmado)
 
-## Ponto importante
+O login de `homecare@proalta.test` está falhando com erro 500 (`Database error querying schema`). A causa está confirmada nos dados: esse usuário tem campos de token de autenticação gravados como NULL (`confirmation_token`, `recovery_token`, `email_change`, `email_change_token_new`), enquanto todos os outros usuários têm string vazia. O serviço de autenticação não consegue ler NULL nesses campos e devolve erro 500. Os demais logins (ex.: `admin@proalta.test`) funcionam normalmente.
 
-A tabela `hospitals` tem apenas **um** campo `admin_user_id`, e ele já aponta para `admin@proalta.test`. Sobrescrever esse campo faria o admin de teste perder o vínculo. Por isso o vínculo será feito pelo **perfil** do usuário, que já é o caminho de fallback usado pelo app.
+Segundo ponto: `homecare@proalta.test` está cadastrado com o papel **homecare_admin**, ou seja, ele entra no painel `/homecare` e nunca na experiência de paciente. Ele também não está vinculado a nenhuma empresa via perfil de paciente. Portanto, mesmo depois de corrigido o login, esse e-mail não serve para testar a visão do paciente.
 
 ## O que será feito
 
-1. **Atualizar o perfil do usuário** (alteração de dados, não de estrutura):
-   - Definir `hospital_id = a1b2c3d4-e5f6-7890-abcd-ef1234567890` (Hospital ProAlta Teste) no perfil de `belinatocursos@gmail.com`.
-   - `hospitals.admin_user_id` permanece com `admin@proalta.test`.
+1. **Corrigir o login quebrado**: normalizar os campos de token NULL do usuário `homecare@proalta.test` (e de qualquer outro usuário na mesma situação) para string vazia. Depois disso o login com `homecare@proalta.test` / `homecare123` volta a funcionar e cai no painel Home Care.
 
-2. **Verificar o efeito** com consultas de leitura:
-   - Confirmar que o perfil ficou com o hospital correto.
-   - Confirmar que os vídeos visíveis para esse hospital (globais + do hospital) aparecem na contagem esperada.
+2. **Criar uma conta de teste de paciente dedicada**: um novo usuário `paciente@proalta.test` / `paciente123`, com:
+   - papel `patient`;
+   - perfil vinculado ao Hospital ProAlta Teste;
+   - vínculo com a empresa "Cuidar Home Care" (para aparecer no painel Home Care);
+   - terapias `nutricao-enteral` e `ostomia` atribuídas, para que a biblioteca de vídeos e as orientações apareçam filtradas corretamente.
+
+3. **Validar** os dois logins e confirmar que o paciente enxerga vídeos, orientações e checklist.
 
 ## Detalhes técnicos
 
-O hook `useUserRole` já resolve o hospital de um `hospital_admin` em duas etapas: primeiro procura em `hospitals.admin_user_id` e, se não achar, cai para `profiles.hospital_id`. Como esse fallback já está implementado, nenhuma alteração de código é necessária — apenas o ajuste de dados. As telas `/admin`, `/admin/videos`, `/admin/pacientes` e demais passam a receber o `hospitalId` correto automaticamente.
-
-Se você preferir que `belinatocursos@gmail.com` seja o **dono oficial** do hospital (substituindo `admin@proalta.test` em `hospitals.admin_user_id`), me avise — é uma variação de uma linha, mas o admin de teste perderia o vínculo direto.
+- Migração no banco: `UPDATE auth.users SET confirmation_token = '', recovery_token = '', email_change = '', email_change_token_new = '' WHERE ... IS NULL`.
+- Criação do paciente de teste via função existente de seed (mesmo padrão usado para `admin@proalta.test`), seguida de inserts em `user_roles`, `profiles.hospital_id`, `patient_homecare` e `patient_therapies`.
+- Nenhuma alteração de código de frontend é necessária.
