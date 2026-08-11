@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { HelpCircle, Send, Check, Bot } from "lucide-react";
+import { HelpCircle, Send, Check, Bot, Pencil, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,7 @@ const AdminQuestions = () => {
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Record<string, string>>({}); // Rascunhos de resposta por ID
   const [saving, setSaving] = useState<string | null>(null); // ID da pergunta sendo salva
+  const [editing, setEditing] = useState<string | null>(null); // ID da resposta em edição
 
   // Busca as dúvidas ao montar, filtradas pelo hospital
   useEffect(() => {
@@ -73,6 +74,7 @@ const AdminQuestions = () => {
         answer: answerText,
         answered_at: new Date().toISOString(),
         answered_by: user!.id,
+        is_ai_answer: false, // resposta revisada/escrita pelo admin
       })
       .eq("id", questionId);
 
@@ -82,8 +84,15 @@ const AdminQuestions = () => {
     } else {
       toast.success("Resposta enviada!");
       setAnswers((prev) => ({ ...prev, [questionId]: "" }));
+      setEditing(null);
       fetchQuestions(); // Recarrega a lista
     }
+  };
+
+  /** Abre o editor de uma resposta já existente (inclusive gerada pela IA) */
+  const startEdit = (q: Question) => {
+    setEditing(q.id);
+    setAnswers((prev) => ({ ...prev, [q.id]: q.answer ?? "" }));
   };
 
   // Separa as dúvidas em pendentes e respondidas
@@ -169,10 +178,40 @@ const AdminQuestions = () => {
                       )}
                     </div>
                     <p className="text-sm text-foreground">{q.content}</p>
-                    <div className="mt-3 rounded-lg bg-primary/5 p-3">
-                      <p className="text-xs font-medium text-primary mb-1">Resposta:</p>
-                      <p className="text-sm text-foreground">{q.answer}</p>
-                    </div>
+                    {editing === q.id ? (
+                      /* Editor da resposta (permite corrigir a resposta da IA) */
+                      <div className="mt-3">
+                        <Textarea
+                          value={answers[q.id] ?? ""}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                          rows={4}
+                        />
+                        <div className="mt-3 flex gap-2">
+                          <Button
+                            onClick={() => handleAnswer(q.id)}
+                            disabled={saving === q.id || !answers[q.id]?.trim()}
+                            size="sm"
+                          >
+                            <Send className="mr-2 h-4 w-4" />
+                            {saving === q.id ? "Salvando..." : "Salvar resposta"}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditing(null)}>
+                            <X className="mr-2 h-4 w-4" /> Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 rounded-lg bg-primary/5 p-3">
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <p className="text-xs font-medium text-primary">Resposta:</p>
+                          <Button variant="ghost" size="sm" onClick={() => startEdit(q)}>
+                            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                            {q.is_ai_answer ? "Revisar resposta da IA" : "Editar"}
+                          </Button>
+                        </div>
+                        <p className="text-sm text-foreground">{q.answer}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
