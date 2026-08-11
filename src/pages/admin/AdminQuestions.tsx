@@ -32,6 +32,7 @@ const AdminQuestions = () => {
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Record<string, string>>({}); // Rascunhos de resposta por ID
   const [saving, setSaving] = useState<string | null>(null); // ID da pergunta sendo salva
+  const [editing, setEditing] = useState<string | null>(null); // ID da resposta em edição
 
   // Busca as dúvidas ao montar, filtradas pelo hospital
   useEffect(() => {
