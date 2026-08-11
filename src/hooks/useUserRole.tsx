@@ -1,12 +1,16 @@
 /**
  * useUserRole — Hook para verificar a role (papel) do usuário logado.
- * Suporta: patient, hospital_admin, homecare_admin.
+ * Suporta múltiplas roles por usuário, resolvendo por prioridade:
+ * hospital_admin > homecare_admin > patient.
  * Quando hospital_admin: também busca o hospital_id vinculado.
  */
 
 import { useState, useEffect } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Ordem de precedência quando o usuário possui mais de um papel */
+const ROLE_PRIORITY = ["hospital_admin", "homecare_admin", "patient"] as const;
 
 export const useUserRole = () => {
   const { user } = useAuth();
@@ -28,10 +32,10 @@ export const useUserRole = () => {
       const { data } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
-      const userRole = data?.role ?? "patient";
+      const roles = (data ?? []).map((r) => r.role as string);
+      const userRole = ROLE_PRIORITY.find((r) => roles.includes(r)) ?? "patient";
       setRole(userRole);
 
       if (userRole === "hospital_admin") {
