@@ -74,6 +74,7 @@ const AdminQuestions = () => {
         answer: answerText,
         answered_at: new Date().toISOString(),
         answered_by: user!.id,
+        is_ai_answer: false, // resposta revisada/escrita pelo admin
       })
       .eq("id", questionId);
 
@@ -83,8 +84,15 @@ const AdminQuestions = () => {
     } else {
       toast.success("Resposta enviada!");
       setAnswers((prev) => ({ ...prev, [questionId]: "" }));
+      setEditing(null);
       fetchQuestions(); // Recarrega a lista
     }
+  };
+
+  /** Abre o editor de uma resposta já existente (inclusive gerada pela IA) */
+  const startEdit = (q: Question) => {
+    setEditing(q.id);
+    setAnswers((prev) => ({ ...prev, [q.id]: q.answer ?? "" }));
   };
 
   // Separa as dúvidas em pendentes e respondidas
