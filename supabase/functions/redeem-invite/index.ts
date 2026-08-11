@@ -2,12 +2,12 @@
  * redeem-invite — Edge function que valida um convite, cria a conta do paciente
  * e vincula automaticamente ao hospital ou empresa de home care, com terapia opcional.
  *
- * Fluxo:
+ * Fluxo (à prova de corrida):
  * 1. Recebe { token, email, password, nome }
- * 2. Valida invite (existe, não revogado, não usado)
- * 3. Cria usuário (admin API) com metadata invite_token (para o trigger pular role default)
- * 4. Vincula: profile.hospital_id, user_roles.patient, patient_therapies (se módulo) ou patient_homecare
- * 5. Marca invite como redeemed
+ * 2. Marca o convite como usado de forma atômica
+ *    (UPDATE ... WHERE redeemed_at IS NULL AND revoked_at IS NULL RETURNING *)
+ * 3. Só então cria o usuário e faz os vínculos
+ * 4. Se a criação falhar, libera o convite novamente
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -47,17 +47,30 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Busca invite
-    const { data: invite, error: inviteErr } = await admin
+    // 1. Reserva o convite atomicamente: apenas UM resgate simultâneo consegue marcar
+    const { data: invite, error: claimErr } = await admin
       .from("patient_invites")
-      .select("*")
+      .update({ redeemed_at: new Date().toISOString() })
       .eq("token", token)
+      .is("redeemed_at", null)
+      .is("revoked_at", null)
+      .select("*")
       .maybeSingle();
 
-    if (inviteErr) return json({ error: "Erro ao validar convite" }, 500);
-    if (!invite) return json({ error: "Convite não encontrado" }, 404);
-    if (invite.revoked_at) return json({ error: "Convite revogado" }, 410);
-    if (invite.redeemed_at) return json({ error: "Convite já utilizado" }, 410);
+    if (claimErr) return json({ error: "Erro ao validar convite" }, 500);
+
+    if (!invite) {
+      // Diagnostica o motivo sem permitir resgate duplicado
+      const { data: existing } = await admin
+        .from("patient_invites")
+        .select("revoked_at, redeemed_at")
+        .eq("token", token)
+        .maybeSingle();
+
+      if (!existing) return json({ error: "Convite não encontrado" }, 404);
+      if (existing.revoked_at) return json({ error: "Convite revogado" }, 410);
+      return json({ error: "Convite já utilizado" }, 410);
+    }
 
     // 2. Cria usuário (email já confirmado — a validação é o próprio invite)
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
@@ -68,6 +81,11 @@ Deno.serve(async (req) => {
     });
 
     if (createErr || !created.user) {
+      // Libera o convite novamente para uma nova tentativa
+      await admin
+        .from("patient_invites")
+        .update({ redeemed_at: null })
+        .eq("id", invite.id);
       return json({ error: createErr?.message ?? "Erro ao criar conta" }, 400);
     }
     const userId = created.user.id;
@@ -98,10 +116,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 6. Marca invite como usado
+    // 6. Registra quem resgatou
     await admin
       .from("patient_invites")
-      .update({ redeemed_at: new Date().toISOString(), redeemed_by: userId })
+      .update({ redeemed_by: userId })
       .eq("id", invite.id);
 
     return json({ success: true, user_id: userId });
