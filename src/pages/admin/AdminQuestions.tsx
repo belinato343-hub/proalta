@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { HelpCircle, Send, Check, Bot } from "lucide-react";
+import { HelpCircle, Send, Check, Bot, Pencil, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
