@@ -33,6 +33,15 @@ export async function guardSeed(req: Request, admin: SupabaseClient): Promise<Re
     return jsonResponse({ error: "Seed desabilitado" }, 403);
   }
 
+  // Caminho operacional opcional: chave de manutenção guardada em secret.
+  // Se o secret SEED_TRIGGER_KEY não existir, este caminho fica desativado.
+  const triggerKey = Deno.env.get("SEED_TRIGGER_KEY");
+  if (triggerKey && req.headers.get("x-seed-key") === triggerKey) {
+    return null;
+  }
+
+
+
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) return jsonResponse({ error: "Não autenticado" }, 401);
