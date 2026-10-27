@@ -1,0 +1,3 @@
+# Architecture
+- Use vite-plugin-pwa generateSW for offline support with one guarded registration wrapper; previews, development, OAuth and authenticated API responses must not be cached or registered because stale shells and clinical data create safety risks.
+- Keep the install manifest in public/manifest.json and derive app icons from the shared brand asset so web and Apple installation stay consistent.
