@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
       cleanupOutdatedCaches: true,
       runtimeCaching: [
         {
-          urlPattern: ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin && !/^\/~oauth(?:\/|$)/.test(url.pathname),
+          urlPattern: ({ request, url, sameOrigin }) => request.mode === "navigate" && sameOrigin && !/^\/~oauth(?:\/|$)/.test(url.pathname),
           handler: "NetworkFirst",
           options: {
             cacheName: "proalta-pages",
@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
           },
         },
         {
-          urlPattern: ({ url }) => url.origin === self.location.origin && /^\/assets\/.+-[A-Za-z0-9_-]{8,}\.(js|css|png|jpg|svg|woff2?)$/.test(url.pathname),
+          urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/assets\/.+-[A-Za-z0-9_-]{8,}\.(js|css|png|jpg|svg|woff2?)$/.test(url.pathname),
           handler: "CacheFirst",
           options: { cacheName: "proalta-assets", expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 30 } },
         },
